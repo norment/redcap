@@ -34,11 +34,5 @@ services:
             MYSQL_ROOT_PASSWORD: norment123
             MYSQL_DATABASE: redcap
         restart: always
-        volumes:
-            - redcap_datavolume:/var/lib/mysql
-
-# https://stackoverflow.com/questions/39175194/docker-compose-persistent-data-mysql
-# by default volumes are created here: /var/lib/docker/volumes
-volumes:
-    redcap_datavolume:
+     
 
