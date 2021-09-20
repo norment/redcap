@@ -9,9 +9,11 @@ RUN \
     docker-php-ext-configure ldap --with-libdir=lib/x86_64-linux-gnu/ && \
     docker-php-ext-install ldap
 
-# https://serverfault.com/questions/772227/chmod-not-working-correctly-in-docker
-COPY redcap /tmp/redcap
-RUN mv /tmp/redcap /var/www/html && chmod -R 777 /var/www/html/redcap
+RUN apt-get update && apt-get install -y zip
+
+WORKDIR /var/www/html
+COPY redcap11.2.5.zip /var/www/html
+RUN unzip redcap11.2.5.zip && chmod -R 777 /var/www/html/redcap
 
 RUN sed -i 's/your_mysql_host_name/db/' /var/www/html/redcap/database.php
 RUN sed -i 's/your_mysql_db_name/redcap/' /var/www/html/redcap/database.php
