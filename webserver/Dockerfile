@@ -12,3 +12,12 @@ RUN \
 # https://serverfault.com/questions/772227/chmod-not-working-correctly-in-docker
 COPY redcap /tmp/redcap
 RUN mv /tmp/redcap /var/www/html && chmod -R 777 /var/www/html/redcap
+
+RUN sed -i 's/your_mysql_host_name/db/' /var/www/html/redcap/database.php
+RUN sed -i 's/your_mysql_db_name/redcap/' /var/www/html/redcap/database.php
+RUN sed -i 's/your_mysql_db_username/norment_admin/' /var/www/html/redcap/database.php
+RUN sed -i 's/your_mysql_db_password/norment123/' /var/www/html/redcap/database.php
+RUN sed -i "s/salt = ''/salt = 'ik5jfi4c0t'/g" /var/www/html/redcap/database.php
+
+COPY php_uploads.ini /usr/local/etc/php/conf.d/php_uploads.ini
+COPY ldap_config.php /var/www/html/redcap/webtools2/ldap/ldap_config.php
