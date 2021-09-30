@@ -34,5 +34,9 @@ services:
             MYSQL_ROOT_PASSWORD: norment123
             MYSQL_DATABASE: redcap
         restart: always
+        volumes:
+            - redcap_db:/var/lib/mysql
+volumes:
+    redcap_db:
      
 
