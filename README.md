@@ -143,7 +143,7 @@ Having the database configured, access REDCap (`pXX-service-l.tsd.usit.no:8000/r
 
 Some checks likely fail because of a lack of internet access, while other things can be resolved (e.g., `cron jobs`) after login (more details further down).
 
-If the URL was not altered, a REDCap instance should now be accessible via `pXX-service-l.tsd.usit.no:8000`. The instance can be stopped by terminating the run dockers via
+If the URL was not altered, a REDCap instance should now be accessible via `pXX-service-l.tsd.usit.no:8000/redcap`. The instance can be stopped by terminating the run dockers via
 
 ```bash
 docker-compose down
@@ -223,7 +223,7 @@ If you have trouble using `vim` execute the `“set mouse=”` command within th
 
 To try REDCap on your local machine (given the cloned repository and the `.tar.gz` files), follow the steps under [REDCap Deployment](#redcap-deployment), but with differing addresses:
   - phpMyAdmin: http://localhost:9000
-  - REDCap: http://localhost:8000
+  - REDCap: http://localhost:8000/redcap
 
 ## Docker Volumes
 
