@@ -46,6 +46,8 @@ Also download the following files (also to your local machine):
 
 Also make sure you have downloaded REDCap software zip file (e.g. ``redcap11.3.3.zip`` file).
 
+NB! Note that the above files contain a hard-coded account name and password for the SQL database. Feel free to change it for added security. Then remember to update commands below (see e.g. [here](#first-time-configuration) ) with your new SQL account name and password.
+
 Use https://data.tsd.usit.no to import all the files listed above to your TSD project.
 
 Login to TSD, and connect to the pXX-service-l machine (`ssh pXX-service-l.tsd.usit.no`). Then execute the following in the terminal:
