@@ -40,7 +40,8 @@ Download docker images (`mysql.tar.gz`, `phpmyadmin.tar.gz` and `webserver.tar.g
 Also download the following files (also to your local machine):
 * [docker-compose.yml](docker-compose.yml)
 * [database.php](webserver/database.php)
-* [php_uploads.php](webserver/php_uploads.php)
+* [php_uploads.ini](webserver/php_uploads.ini)
+* [ldap_config.php](webserver/ldap_config.php)
 * [redcap_backup.sh](webserver/redcap_backup.sh)
 
 Also make sure you have downloaded REDCap software zip file (e.g. ``redcap11.3.3.zip`` file).
