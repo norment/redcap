@@ -16,7 +16,7 @@ Remember to update [CHANGELOG.md](CHANGELOG.md) to describe the changes.
 The following steps enable the production of the relevant files for a Docker-based REDCap deployment.
 
 ## Prerequisites
-Have [Docker](https://www.docker.com/) locally installed on a machine (Ubuntu or any other Linux distribution; see also [here](https://www.digitalocean.com/community/tutorials/how-to-install-and-use-docker-on-ubuntu-18-04)). 
+Have [Docker](https://www.docker.com/) locally installed on a machine (Ubuntu or any other Linux distribution; see also [here](https://www.digitalocean.com/community/tutorials/how-to-install-and-use-docker-on-ubuntu-18-04)). Ideally, containers should be built on our dedicated [NREC](https://dashboard.nrec.no/dashboard/auth/login/?next=/dashboard/) instance, to avoid accidental changes due to version of the Docker used to re-build containers. Please see [here](https://wiki.norment.uiocloud.no/doku.php?id=how_to_apply_for_nortur_norstor_account) on how to get access to our NREC instance.
   
 ## Make .tar.gz files
 On a terminal
