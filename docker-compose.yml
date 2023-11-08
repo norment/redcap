@@ -8,8 +8,6 @@ services:
             - "8000"
         ports: 
             - "8000:80"
-        links:
-            - database
         restart: always
         volumes:
             - redcap_webserver:/var/www/html/redcap    
@@ -27,8 +25,6 @@ services:
         environment:
             PMA_HOST: database
             PMA_PORT: 3306
-        links:
-            - database
                 
     database:
         image: mysql
@@ -37,9 +33,6 @@ services:
             MYSQL_DATABASE: redcap
         restart: always
         volumes:
-            # https://stackoverflow.com/questions/39175194/docker-compose-persistent-data-
-            # by default volumes are created here: /var/lib/docker/volumes, i.e. locally on the pNN-service-l VM
-            # this is fine, i.e. we don't need to map this to /ess/pNN storage.
             - redcap_mysql_datavolume:/var/lib/mysql
 
 volumes:
