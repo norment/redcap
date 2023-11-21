@@ -12,11 +12,12 @@ $log_all_errors = FALSE;
 // MYSQL DATABASE CONNECTION:
 // Replace the values inside the single quotes below with the values for your MySQL configuration. 
 // If not using the default port 3306, then append a colon and port number to the hostname (e.g. $hostname = 'example.com:3307';).
+$hostname 	= $_ENV['PMA_HOST']
+$db 		= $_ENV['MYSQL_DATABASE']
+$username 	= $_ENV['PMA_RCUSER']
+$password 	= $_ENV['MYSQL_ROOT_PASSWORD']
 
-$hostname 	= 'database';
-$db 		= 'redcap';
-$username 	= 'norment_admin';
-$password 	= 'norment123';
+// $_ENV['REDCAP_SALT']
 
 // You may optionally utilize a database connection over SSL/TLS for improved security. To do so, at minimum
 // you must provide the path of the key file, the certificate file, and certificate authority file.

@@ -1,4 +1,4 @@
-version: '3.4'
+version: '3.8'
 services:
     webserver:
         image: webserver
@@ -9,6 +9,7 @@ services:
         ports: 
             - "8000:80"
         restart: always
+        env_file: .env 
         volumes:
             - redcap_webserver:/var/www/html/redcap    
                     
@@ -18,27 +19,28 @@ services:
         image: phpmyadmin
         container_name: phpmyadmin
         restart: always
+        env_file: .env        
         expose:
             - "9000"
         ports:
             - "9000:80"
-        environment:
-            PMA_HOST: database
-            PMA_PORT: 3306
                 
     database:
         image: mysql
-        environment:
-            MYSQL_ROOT_PASSWORD: norment123
-            MYSQL_DATABASE: redcap
         restart: always
+        env_file: .env
         volumes:
             - redcap_mysql_datavolume:/var/lib/mysql
 
+    cron:
+        depends_on: 
+            - database
+        image: cron        
+        restart: always
+        env_file: .env
+        volumes:
+            - /Users/ju/Downloads/redcap/test:/backup
+        
 volumes:
     redcap_mysql_datavolume:
-    redcap_webserver: # location of redcap files
-
-
-
-            
+    redcap_webserver:
