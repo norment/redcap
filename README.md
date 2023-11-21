@@ -76,6 +76,7 @@ Further, with `.env` variables that are used across containers are defined and p
 ```bash
 MYSQL_DATABASE=redcap
 MYSQL_ROOT_PASSWORD=norment123
+MYSQL_REDCAP_USER=norment_admin
 ```
 
 Now you can try running
