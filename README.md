@@ -4,14 +4,14 @@
 
 - [Getting Started](#getting-started)
 - [Prerequisites](#prerequisites)
-- [Import files to TSD](#import-files-to-tsd)
-- [Load and start docker images](#load-and-start-docker-images)
-- [Edit REDcap configuration files](#edit-redcap-configuration-files)
-- [Copy redcap software into the docker volume](#copy-redcap-software-into-the-docker-volume)
+- [Import Files to TSD](#import-files-to-tsd)
+- [Load and Start Docker Images](#load-and-start-docker-images)
+- [Edit REDCap Configuration Files](#edit-redcap-configuration-files)
+- [Copy REDCap into Docker Volume](#copy-redcap-into-docker-volume)
 - [First-time Configuration](#first-time-configuration)
 - [Registering TSD users through LDAP](#registering-tsd-users-through-ldap)
-- [Configure SQL database backups](#configure-sql-database-backups)
-- [Upgrade REDCap to a newer version](#upgrade-redcap-to-a-newer-version)
+- [Restore SQL database Backups](#restore-sql-database-backups)
+- [Upgrade REDCap to a Newer Version](#upgrade-redcap-to-a-newer-version)
 - [Frequently Asked Questions](#frequently-asked-questions)
 - [Local Testing](#local-testing)
 - [Docker Volumes](#docker-volumes)
@@ -23,7 +23,7 @@ This [repository](https://github.com/norment/redcap) contains [REDCap](https://w
 
 This README covers the Podman-based REDCap deployment procedure for a [TSD](https://www.uio.no/english/services/it/research/sensitive-data/index.html) project. Optionally, you could first test REDcap deployment on your local machine, as described [here](#local-testing). For additional details see [CONTRIBUTING.md](CONTRIBUTING.md).
 
-If you're new to [Podman](https://podman.io/), check the information [here](https://www.redhat.com/en/topics/containers/what-is-podman). As pointed out there, "Podman is a powerful alternative to [Docker](https://docs.docker.com/get-started/), but the two can also work together". I.e., in case you are more familiar with Docker, most commands are easily interchangeable. 
+If you're new to [Podman](https://podman.io/), check the information [here](https://www.redhat.com/en/topics/containers/what-is-podman). As pointed out, "Podman is a powerful alternative to [Docker](https://docs.docker.com/get-started/), but the two can also work together". I.e., in case you are more familiar with Docker, most commands are easily interchangeable. 
 You may also want to register to be a member of [REDCap community](https://redcap.vanderbilt.edu/community/) which provides access to additional documentation and resources beyond what's available on  REDCap's public [website](https://www.project-redcap.org).
 
 ## Prerequisites
@@ -93,16 +93,15 @@ docker-compose up -d # to start the process in the background
 
 The logs can be checked using the command `docker-compose logs` or to see the tail `docker-compose logs --tail 10`.
 
-## Edit REDcap Configuration Files
-Extract the REDCap software zip file file in `$REDCAPDIR`.
-Update configuration as follows:
+## Edit REDCap Configuration Files
+Extract the REDCap zip file into `$REDCAPDIR` and:
 
-- the `database.php` file located [here](webserver/database.php) and place it in the REDCap directory or edit the file manually to adapt the MySQL configuration of REDCap by changing lines 6–19 to:
+- update the `database.php` file located [here](webserver/database.php) and place it in the REDCap directory or edit the file manually to adapt the MySQL configuration of REDCap by changing lines 6–19 to:
   ```php
-  $hostname 	= $_ENV['PMA_HOST'];
-  $db 		= $_ENV['MYSQL_DATABASE'];
-  $username 	= $_ENV['PMA_RCUSER'];
-  $password 	= $_ENV['MYSQL_ROOT_PASSWORD'];
+  $hostname   = $_ENV['PMA_HOST'];
+  $db     = $_ENV['MYSQL_DATABASE'];
+  $username   = $_ENV['PMA_RCUSER'];
+  $password   = $_ENV['MYSQL_ROOT_PASSWORD'];
   ```
 
 - enable the TSD-specific LDAP authentication by adapting the LDAP connection information under `$REDCAPDIR/redcap/webtools2/ldap/ldap_config.php`, or use [this](webserver/ldap_config.php) file directly:
@@ -120,10 +119,10 @@ Update configuration as follows:
   );
   ```
 
-Make the REDCap directory executable and accessible to all users:
-```bash
-chmod -R 777 ./redcap
-```
+- make the REDCap directory executable and accessible to all users:
+  ```bash
+  chmod -R 777 ./redcap
+  ```
 
 ## Copy REDCap into Docker Volume
 Copy the REDCap directory into the web server volume via
@@ -144,7 +143,7 @@ CREATE USER 'norment_admin'@'%' IDENTIFIED WITH mysql_native_password BY 'normen
 GRANT SELECT, INSERT, UPDATE, DELETE ON `redcap`.* TO 'norment_admin'@'%';
 ``` -->
 
-Before running the commands below, make sure your shell's cd is where `.env` is located. Then add a user the database via
+Before running the commands below, make sure your shell's cd is where `.env` is located. Then add a user to the database via
 ```bash
 source .env
 podman exec -i redcap_database_1 mysql -uroot -p${MYSQL_ROOT_PASSWORD} -e "CREATE DATABASE IF NOT EXISTS ${MYSQL_DATABASE};"
@@ -178,7 +177,7 @@ in the SQL tab.
 
 Once adding TSD user credentials works, reverse the authentication once more to make yourself or the respective users admins via `Control Center` &rarr; `Administrator Privileges`.
 
-To enable that API Tokens can be generated by users without the admins's approval, go to `User Settings` &rarr;  `General User Settings` and select `Yes, allow ALL users to generate API tokens on their own`.
+To enable that API Tokens can be generated by users without the admins's approval, go to `User Settings` &rarr; `General User Settings` and select `Yes, allow ALL users to generate API tokens on their own`.
 
 ## Restore SQL database Backups
 To restore the REDCap database using the `mysqldump` utility (after a new install; remember that the installed version of the REDcap must precisely match the version used to generate SQL backup!) unzip the backup file and run:
