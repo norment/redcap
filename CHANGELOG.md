@@ -9,6 +9,10 @@ This is also an operational log of our REDcap deployment and management.
 * important changes to scripts that manage data within REDcap
 
 ## 2023-09-21
+- Added containerized cronjob
+- Added .env where variables are defined
+
+## 2023-09-21
 - Elaborating the README on both REDcap deployment and creation
 - Importing the cron job backup script from TSD p33
 - Adding of the docker images (.tar.gz)
