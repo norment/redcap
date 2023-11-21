@@ -15,7 +15,7 @@ $log_all_errors = FALSE;
 // If not using the default port 3306, then append a colon and port number to the hostname (e.g. $hostname = 'example.com:3307';).
 $hostname 	= $_ENV['PMA_HOST'];
 $db 		= $_ENV['MYSQL_DATABASE'];
-$username 	= $_ENV['PMA_RCUSER'];
+$username 	= $_ENV['MYSQL_REDCAP_USER'];
 $password 	= $_ENV['MYSQL_ROOT_PASSWORD'];
 
 // You may optionally utilize a database connection over SSL/TLS for improved security. To do so, at minimum

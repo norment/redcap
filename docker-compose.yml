@@ -39,7 +39,7 @@ services:
         restart: always
         env_file: .env
         volumes:
-            - /Users/ju/Downloads/redcap/test:/backup
+            - /tsd/pXX/data/durable/database/redcap_backup:/backup
         
 volumes:
     redcap_mysql_datavolume:
