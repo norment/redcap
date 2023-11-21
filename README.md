@@ -142,16 +142,6 @@ CREATE DATABASE IF NOT EXISTS `redcap`;
 CREATE USER 'norment_admin'@'%' IDENTIFIED WITH mysql_native_password BY 'norment123';
 GRANT SELECT, INSERT, UPDATE, DELETE ON `redcap`.* TO 'norment_admin'@'%';
 ``` -->
-
-Before running the commands below, make sure your shell's cd is where `.env` is located. Then add a user to the database via
-```bash
-source .env
-podman exec -i redcap_database_1 mysql -uroot -p${MYSQL_ROOT_PASSWORD} -e "CREATE DATABASE IF NOT EXISTS ${MYSQL_DATABASE};"
-podman exec -i redcap_database_1 mysql -uroot -p${MYSQL_ROOT_PASSWORD} -e "CREATE USER ${MYSQL_REDCAP_USER}@'%' IDENTIFIED WITH mysql_native_password BY '${MYSQL_ROOT_PASSWORD}';"
-podman exec -i redcap_database_1 mysql -uroot -p${MYSQL_ROOT_PASSWORD} -e "GRANT SELECT, INSERT, UPDATE, DELETE ON ${MYSQL_DATABASE}.* TO '${MYSQL_REDCAP_USER}'@'%';"
-podman exec -i redcap_database_1 mysql -uroot -p${MYSQL_ROOT_PASSWORD} -e "FLUSH PRIVILEGES;"
-```
-
 Having the database configured, access REDCap (`pXX-podman.tsd.usit.no:8000/redcap/install.php`) (if the connection to the database does not succeed, the problem is likely in `database.php`). Follow the instructions for the REDCap configuration. The URL can be modified, and additional configurations such as date and time format can be made. Eventually, press `Generate SQL install script` and copy the prompted SQL commands. 
 
 From a browser, log in to phpMyAdmin (`pXX-podman.tsd.usit.no:9000`) with the root user credentials (root, $MYSQL_ROOT_PASSWORD (see `.env` default is "norment123")) and navigate to the SQL tab and paste the copied SQL commands and press `Go`.
@@ -223,6 +213,16 @@ Tracking the output of all containers defined in `docker-compose.yml`
 ```bash
 docker-compose logs --tail=0 --follow
 ```
+
+In case you want to adapt the user credentials for the MySQL database after you have run the `docker-compose.yml` via `docker-compose up -d`, you need update the changes. Before running the commands below, make sure your shell's cd is where `.env` is located. Then add a user to the database via
+```bash
+source .env
+podman exec -i redcap_database_1 mysql -uroot -p${MYSQL_ROOT_PASSWORD} -e "CREATE DATABASE IF NOT EXISTS ${MYSQL_DATABASE};"
+podman exec -i redcap_database_1 mysql -uroot -p${MYSQL_ROOT_PASSWORD} -e "CREATE USER ${MYSQL_REDCAP_USER}@'%' IDENTIFIED WITH mysql_native_password BY '${MYSQL_ROOT_PASSWORD}';"
+podman exec -i redcap_database_1 mysql -uroot -p${MYSQL_ROOT_PASSWORD} -e "GRANT SELECT, INSERT, UPDATE, DELETE ON ${MYSQL_DATABASE}.* TO '${MYSQL_REDCAP_USER}'@'%';"
+podman exec -i redcap_database_1 mysql -uroot -p${MYSQL_ROOT_PASSWORD} -e "FLUSH PRIVILEGES;"
+```
+or alternatively delete the volume via `docker-compose down --volumes`. This is needed as the MySQL container runs a script called init.sh which executes these comments only for the first time (see [here](https://hub.docker.com/_/mysql/) under "Initializing a fresh instance").
 
 Need to adapt the file upload and memory limit settings? The web server docker container contains the php configuration file needed to update the file upload size settings. Change the variables in the `php.ini` file (inside web server container `/usr/local/etc/php`) `post_max_size` and `upload_max_filesize` to a higher value (currently set to 10 GB). Set the value of the variable `memory_limit` to 10 GB. [Here](webserver/php_uploads.ini) are the settings we used.
 
