@@ -5,9 +5,9 @@ services:
         depends_on:
             - database
         expose:
-            - "${MYSQL_PORT_PMA}"
+            - "${MYSQL_PORT_WEBSERVER}"
         ports: 
-            - "${MYSQL_PORT_PMA}:80"
+            - "${MYSQL_PORT_WEBSERVER}:80"
         restart: always
         env_file: .env 
         volumes:
@@ -21,9 +21,9 @@ services:
         restart: always
         env_file: .env        
         expose:
-            - "${MYSQL_PORT_WEBSERVER}"
+            - "${MYSQL_PORT_PMA}"
         ports:
-            - "${MYSQL_PORT_WEBSERVER}:80"
+            - "${MYSQL_PORT_PMA}:80"
         environment:
             PMA_HOST: database
             PMA_PORT: 3306            
