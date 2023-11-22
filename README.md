@@ -28,7 +28,7 @@ If you're new to [Podman](https://podman.io/), check the information [here](http
 You may also want to register to be a member of [REDCap community](https://redcap.vanderbilt.edu/community/) which provides access to additional documentation and resources beyond what's available on  REDCap's public [website](https://www.project-redcap.org).
 
 ## Prerequisites
-You need to have a “pXX-podman” Linux VM that supports `podman` and `docker-compose` in the TSD project where you want to deploy the REDCap. To find out if such a machine is available try logging in to the “pXX-podman” machine using ssh or Putty, and execute `podman ps` and `docker-compose`. If this does not work, report this to [TSD drift](tsd-drift@usit.uio.no). If the “pXX-podman“ machine itself is not available, request to create a Linux service VM for your TSD project (suggested specs: 4 GB RAM, 2 VCPUs, and 100 GB storage), and install `podman` and `docker-compose` on that machine.
+You need to have a “pXX-podman” Linux VM that supports `podman` and `docker-compose` in the TSD project where you want to deploy the REDCap. To find out if such a machine is available try logging in to the “pXX-podman” machine using ssh or Putty, and execute `podman ps` and `docker-compose`. If this does not work, report this to the [TSD service](https://www.uio.no/english/services/it/research/sensitive-data/contact/index.html). If the “pXX-podman“ machine itself is not available, request to create a Linux service VM for your TSD project (suggested specs: 4 GB RAM, 2 VCPUs, and 100 GB storage), and install `podman` and `docker-compose` on that machine.
 
 To deploy REDCap, you need its source code requiring a valid end-user license [agreement](https://projectredcap.org/partners/join/) between Vanderbilt University and your organization. We're in the process of applying for a broad UiO-wide REDcap license, but this is not finalized as of Oct 2023. If your organization already has such an agreement, download the latest REDCap software zip file from [here](https://redcap.vanderbilt.edu/community/custom/download.php) or apply for one. Consider choosing a Long-Term Support (“LTS”) version. (With TSD p33/p697 access, see also `/tsd/pXX/data/durable/database/redcap`).
 
@@ -65,7 +65,7 @@ podman load < mysql.tar.gz
 podman load < cron.tar.gz
 ```
 
-Before testing the loaded images, adapt the backup directory in line 42 of `docker-compose.yml` which defines where the database backups are created (daily backups are scheduled through the [cron](https://en.wikipedia.org/wiki/Cron) container).
+Before testing the loaded images, adapt the backup directory in line 45 of `docker-compose.yml` which defines where the database backups are created (daily backups are scheduled through the [cron](https://en.wikipedia.org/wiki/Cron) container).
 ```bash
 - <<your_backup_directory_path>>:/backup
 ```
@@ -97,7 +97,7 @@ Extract the REDCap zip file into `$REDCAPDIR` and:
 
 - update the `database.php` file located [here](webserver/database.php) and place it in the REDCap directory or edit the file manually to adapt the MySQL configuration of REDCap by changing lines 6–19 to:
   ```php
-  $hostname 	= $_ENV['PMA_HOST'];
+  $hostname 	= database;
   $db 		= $_ENV['MYSQL_DATABASE'];
   $username 	= $_ENV['MYSQL_REDCAP_USER'];
   $password 	= $_ENV['MYSQL_ROOT_PASSWORD'];
@@ -213,7 +213,7 @@ Tracking the output of all containers defined in `docker-compose.yml`
 docker-compose logs --tail=0 --follow
 ```
 
-In case you want to adapt the user credentials for the MySQL database after you have run the `docker-compose.yml` via `docker-compose up -d`, you need update the changes. Before running the commands below, make sure your shell's cd is where `.env` is located. Then add a user to the database via
+In case you want to adapt the user credentials for the MySQL database after you run the `docker-compose.yml` via `docker-compose up -d`, you need update the changes. Before running the commands below, make sure your shell's cd is where `.env` is located. Then add the updated user credentials to the databsevia
 ```bash
 source .env
 podman exec -i redcap_database_1 mysql -uroot -p${MYSQL_ROOT_PASSWORD} -e "CREATE DATABASE IF NOT EXISTS ${MYSQL_DATABASE};"
@@ -221,7 +221,7 @@ podman exec -i redcap_database_1 mysql -uroot -p${MYSQL_ROOT_PASSWORD} -e "CREAT
 podman exec -i redcap_database_1 mysql -uroot -p${MYSQL_ROOT_PASSWORD} -e "GRANT SELECT, INSERT, UPDATE, DELETE ON ${MYSQL_DATABASE}.* TO '${MYSQL_REDCAP_USER}'@'%';"
 podman exec -i redcap_database_1 mysql -uroot -p${MYSQL_ROOT_PASSWORD} -e "FLUSH PRIVILEGES;"
 ```
-or alternatively delete the volume via `docker-compose down --volumes`. This is needed as the MySQL container runs a script called init.sh which executes these comments only for the first time (see [here](https://hub.docker.com/_/mysql/) under "Initializing a fresh instance").
+Alternatively, you can also delete the relevant one via `docker volume rm redcap_redcap_mysql_datavolume`. This step is needed since during the first initializtion the MySQL container runs a script called init.sh which executes these commands only for the first time (see [here](https://hub.docker.com/_/mysql/) under "Initializing a fresh instance").
 
 Need to adapt the file upload and memory limit settings? The web server docker container contains the php configuration file needed to update the file upload size settings. Change the variables in the `php.ini` file (inside web server container `/usr/local/etc/php`) `post_max_size` and `upload_max_filesize` to a higher value (currently set to 10 GB). Set the value of the variable `memory_limit` to 10 GB. [Here](webserver/php_uploads.ini) are the settings we used.
 
@@ -250,7 +250,7 @@ podman volume ls
 
 and their respective mount points via
 ```bash
-podman inspect volume_name
+podman inspect <<volume_name>>
 ```
 
 In the case of the MySQL database, it should be (w.r.t. the path above) `./redcap_redcap_database/_data`.
