@@ -5,9 +5,9 @@ services:
         depends_on:
             - database
         expose:
-            - "8000"
+            - "${MYSQL_PORT_PMA}"
         ports: 
-            - "8000:80"
+            - "${MYSQL_PORT_PMA}:80"
         restart: always
         env_file: .env 
         volumes:
@@ -21,9 +21,12 @@ services:
         restart: always
         env_file: .env        
         expose:
-            - "9000"
+            - "${MYSQL_PORT_WEBSERVER}"
         ports:
-            - "9000:80"
+            - "${MYSQL_PORT_WEBSERVER}:80"
+        environment:
+            PMA_HOST: database
+            PMA_PORT: 3306            
                 
     database:
         image: mysql
@@ -38,9 +41,9 @@ services:
         image: cron        
         restart: always
         env_file: .env
-        volumes:
+        volumes:        
             - /tsd/pXX/data/durable/database/redcap_backup:/backup
-        
+
 volumes:
     redcap_mysql_datavolume:
     redcap_webserver:

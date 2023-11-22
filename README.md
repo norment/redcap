@@ -65,7 +65,7 @@ podman load < mysql.tar.gz
 podman load < cron.tar.gz
 ```
 
-Before testing the loaded images, adapt the backup directory in line 42 of `docker-compose.yml` which defines where the database backups are created (daily backups are scheduled through the [crontab](https://crontab.guru/) container).
+Before testing the loaded images, adapt the backup directory in line 42 of `docker-compose.yml` which defines where the database backups are created (daily backups are scheduled through the [cron](https://en.wikipedia.org/wiki/Cron) container).
 ```bash
 - <<your_backup_directory_path>>:/backup
 ```
