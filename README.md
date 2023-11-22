@@ -24,6 +24,7 @@ This [repository](https://github.com/norment/redcap) contains [REDCap](https://w
 This README covers the Podman-based REDCap deployment procedure for a [TSD](https://www.uio.no/english/services/it/research/sensitive-data/index.html) project. Optionally, you could first test REDcap deployment on your local machine, as described [here](#local-testing). For additional details see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 If you're new to [Podman](https://podman.io/), check the information [here](https://www.redhat.com/en/topics/containers/what-is-podman). As pointed out, "Podman is a powerful alternative to [Docker](https://docs.docker.com/get-started/), but the two can also work together". I.e., in case you are more familiar with Docker, most commands are easily interchangeable. 
+
 You may also want to register to be a member of [REDCap community](https://redcap.vanderbilt.edu/community/) which provides access to additional documentation and resources beyond what's available on  REDCap's public [website](https://www.project-redcap.org).
 
 ## Prerequisites
@@ -39,7 +40,6 @@ Also, download the following files (also to your local machine):
 * [database.php](webserver/database.php)
 * [php_uploads.ini](webserver/php_uploads.ini)
 * [ldap_config.php](webserver/ldap_config.php)
-* [redcap_backup.sh](webserver/redcap_backup.sh)
 * [.env](.env)
 
 Also, make sure you have downloaded the REDCap software zip file (e.g. ``redcap11.3.3.zip`` file).
@@ -65,21 +65,20 @@ podman load < mysql.tar.gz
 podman load < cron.tar.gz
 ```
 
-Daily backups are scheduled through the `cronjob` container, and before testing if loaded images run properly, adapt the backup directory in line 42 of `docker-compose.yml` which defines where the database backups will be created.
+Before testing the loaded images, adapt the backup directory in line 42 of `docker-compose.yml` which defines where the database backups are created (daily backups are scheduled through the [crontab](https://crontab.guru/) container).
 ```bash
 - <<your_backup_directory_path>>:/backup
 ```
-
 <!-- NB! Note that the above files contain a hard-coded account name and password for the SQL database. Feel free to change it for added security. Then remember to update the commands below (see e.g. [here](#first-time-configuration) ) with your new SQL account name and password. -->
 
-Further, with `.env` variables that are used across containers are defined and passed to the respective containers. Feel free to adapt the login credentials for the MySQL database, i.e. adapt
+The file [.env](.env) defines variables that are used across containers. Feel free to adapt the login credentials for the MySQL database, i.e. adapt
 ```bash
 MYSQL_DATABASE=redcap
 MYSQL_ROOT_PASSWORD=norment123
 MYSQL_REDCAP_USER=norment_admin
 ```
 
-Now you can try running
+Having set the backup path and the MySQL credentials, you can try running
 ```bash
 docker-compose up
 ```
@@ -98,10 +97,10 @@ Extract the REDCap zip file into `$REDCAPDIR` and:
 
 - update the `database.php` file located [here](webserver/database.php) and place it in the REDCap directory or edit the file manually to adapt the MySQL configuration of REDCap by changing lines 6–19 to:
   ```php
-  $hostname   = $_ENV['PMA_HOST'];
-  $db     = $_ENV['MYSQL_DATABASE'];
-  $username   = $_ENV['PMA_RCUSER'];
-  $password   = $_ENV['MYSQL_ROOT_PASSWORD'];
+  $hostname 	= $_ENV['PMA_HOST'];
+  $db 		= $_ENV['MYSQL_DATABASE'];
+  $username 	= $_ENV['MYSQL_REDCAP_USER'];
+  $password 	= $_ENV['MYSQL_ROOT_PASSWORD'];
   ```
 
 - enable the TSD-specific LDAP authentication by adapting the LDAP connection information under `$REDCAPDIR/redcap/webtools2/ldap/ldap_config.php`, or use [this](webserver/ldap_config.php) file directly:
@@ -144,7 +143,7 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON `redcap`.* TO 'norment_admin'@'%';
 ``` -->
 Having the database configured, access REDCap (`pXX-podman.tsd.usit.no:8000/redcap/install.php`) (if the connection to the database does not succeed, the problem is likely in `database.php`). Follow the instructions for the REDCap configuration. The URL can be modified, and additional configurations such as date and time format can be made. Eventually, press `Generate SQL install script` and copy the prompted SQL commands. 
 
-From a browser, log in to phpMyAdmin (`pXX-podman.tsd.usit.no:9000`) with the root user credentials (root, $MYSQL_ROOT_PASSWORD (see `.env` default is "norment123")) and navigate to the SQL tab and paste the copied SQL commands and press `Go`.
+From a browser, log in to phpMyAdmin (`pXX-podman.tsd.usit.no:9000`) with the root user credentials (root, $MYSQL_ROOT_PASSWORD (see [.env](.env), default is "norment123")) and navigate to the SQL tab and paste the copied SQL commands and press `Go`.
 
 Some checks likely fail because of a lack of internet access, while other things can be resolved (e.g., `cron jobs`) after login (more details further down).
 
