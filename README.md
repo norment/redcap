@@ -205,7 +205,7 @@ podman exec ${PREFIX}webserver rm -rf ./redcap/redcap_vX.X.X
 Copy `docker-compose.yml` and `.env` to a new directory. Adapt the backup path in line 54 of the former and adapt the prefix and ports in the latter:
 
 ``` bash
-PREFIX=redcap_dev
+PREFIX=redcap_dev_
 PHPMYADMIN_PORT=9009
 REDCAP_PORT=8009
 ```
