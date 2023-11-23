@@ -134,7 +134,7 @@ Copy the REDCap directory into the web server volume via
 podman cp $REDCAPDIR/redcap ${PREFIX}webserver:/var/www/html/
 ```
 
-The name of the volume should be `${PREFIX}webserver`. If that is not the case, please adapt the name in the command (all docker volumes can be listed via `podman volume ls`).
+The name of the respective container should be `${PREFIX}webserver`. If that is not the case, please adapt the name in the command (all docker containers or volumes can be listed via `podman ps` or `podman volume ls`).
 
 See [here](#docker-volumes) for brief information about docker volumes and how we used them for REDcap deployment.
 
