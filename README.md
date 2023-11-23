@@ -268,4 +268,4 @@ and their respective mount points via
 podman inspect <<volume_name>>
 ```
 
-In the case of the MySQL database, it should be (w.r.t. the path above) `./redcap_redcap_database/_data`.
+In the case of the MySQL database, it should be (w.r.t. the path above) `./${PREFIX}database/_data`.
