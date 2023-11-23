@@ -210,7 +210,7 @@ PHPMYADMIN_PORT=9009
 REDCAP_PORT=8009
 ```
 
-From that directory, execute `docker-compose up -d` and proceed with the steps [above](#edit-redcap-configuration-files).
+From that directory, execute `docker-compose up -d` and proceed with the steps [above](#copy-redcap-into-docker-volume).
 
 ## Frequently Asked Questions
 <!-- If REDCap is not loading through the browser, restart the docker daemon service on pXX-podman
