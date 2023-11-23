@@ -8,6 +8,10 @@ This is also an operational log of our REDcap deployment and management.
 * changes to infrastructure (e.g. switching to a new service VM, changing what service user we run the service from, etc.)
 * important changes to scripts that manage data within REDcap
 
+## 2023-11-23
+
+- Support multiple REDcap instances on a single machine
+
 ## 2023-11-21
 - Added containerized cronjob
 - Added .env where variables are defined
