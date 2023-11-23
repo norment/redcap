@@ -231,16 +231,6 @@ Tracking the output of all containers defined in `docker-compose.yml`
 docker-compose logs --tail=0 --follow
 ```
 
-In case you want to adapt the user credentials for the MySQL database after you run the `docker-compose.yml` via `docker-compose up -d`, you need to update the changes. Before running the commands below, make sure your shell's cd is where `.env` is located. Then add the updated user credentials to the database via
-```bash
-source .env
-podman exec -i ${PREFIX}database mysql -uroot -p${MYSQL_ROOT_PASSWORD} -e "CREATE DATABASE IF NOT EXISTS ${MYSQL_DATABASE};"
-podman exec -i ${PREFIX}database mysql -uroot -p${MYSQL_ROOT_PASSWORD} -e "CREATE USER ${MYSQL_REDCAP_USER}@'%' IDENTIFIED WITH mysql_native_password BY '${MYSQL_ROOT_PASSWORD}';"
-podman exec -i ${PREFIX}database mysql -uroot -p${MYSQL_ROOT_PASSWORD} -e "GRANT SELECT, INSERT, UPDATE, DELETE ON ${MYSQL_DATABASE}.* TO '${MYSQL_REDCAP_USER}'@'%';"
-podman exec -i ${PREFIX}database mysql -uroot -p${MYSQL_ROOT_PASSWORD} -e "FLUSH PRIVILEGES;"
-```
-Alternatively, you can also delete the relevant one via `docker volume rm ${PREFIX}mysql_datavolume`. This step is needed as during the first initialization the MySQL container runs [init.sh](mysql/init.sh) which executes these commands once (see [here](https://hub.docker.com/_/mysql/) under "Initializing a fresh instance").
-
 Need to adapt the file upload and memory limit settings? The web server docker container contains the php configuration file needed to update the file upload size settings. Change the variables in the `php.ini` file (inside web server container `/usr/local/etc/php`) `post_max_size` and `upload_max_filesize` to a higher value (currently set to 10 GB). Set the value of the variable `memory_limit` to 10 GB. [Here](webserver/php_uploads.ini) are the settings we used.
 
 If you have trouble using `vim` execute the `“set mouse=”` command within the container as described [here](https://vi.stackexchange.com/questions/18001/why-cant-i-paste-commands-into-vi) and restart the docker web server with `podman restart dockername`.
