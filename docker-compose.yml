@@ -51,8 +51,7 @@ services:
         restart: always
         env_file: .env
         volumes:
-            # - /tsd/pXX/data/durable/database/redcap_backup:/backup
-            - /Users/ju/Downloads/redcap/test:/backup
+            - /tsd/pXX/data/durable/database/redcap_backup:/backup
         networks:
             - network
 
