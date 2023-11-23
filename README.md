@@ -12,6 +12,7 @@
 - [Registering TSD users through LDAP](#registering-tsd-users-through-ldap)
 - [Restore SQL database Backups](#restore-sql-database-backups)
 - [Upgrade REDCap to a Newer Version](#upgrade-redcap-to-a-newer-version)
+- [Multiple Instances](#multiple-instances)
 - [Frequently Asked Questions](#frequently-asked-questions)
 - [Local Testing](#local-testing)
 - [Docker Volumes](#docker-volumes)
@@ -30,7 +31,7 @@ You may also want to register to be a member of [REDCap community](https://redca
 ## Prerequisites
 You need to have a “pXX-podman” Linux VM that supports `podman` and `docker-compose` in the TSD project where you want to deploy the REDCap. To find out if such a machine is available try logging in to the “pXX-podman” machine using ssh or Putty, and execute `podman ps` and `docker-compose`. If this does not work, report this to the [TSD service](https://www.uio.no/english/services/it/research/sensitive-data/contact/index.html). If the “pXX-podman“ machine itself is not available, request to create a Linux service VM for your TSD project (suggested specs: 4 GB RAM, 2 VCPUs, and 100 GB storage), and install `podman` and `docker-compose` on that machine.
 
-To deploy REDCap, you need its source code requiring a valid end-user license [agreement](https://projectredcap.org/partners/join/) between Vanderbilt University and your organization. We're in the process of applying for a broad UiO-wide REDcap license, but this is not finalized as of Oct 2023. If your organization already has such an agreement, download the latest REDCap software zip file from [here](https://redcap.vanderbilt.edu/community/custom/download.php) or apply for one. Consider choosing a Long-Term Support (“LTS”) version. (With TSD p33/p697 access, see also `/tsd/pXX/data/durable/database/redcap`).
+To deploy REDCap, you need its source code requiring a valid end-user license [agreement](https://projectredcap.org/partners/join/) between Vanderbilt University and your organization. We're in the process of applying for a broad UiO-wide REDCap license, but this is not finalized as of Nov. 2023. If your organization already has such an agreement, download the latest REDCap software zip file from [here](https://redcap.vanderbilt.edu/community/custom/download.php) or apply for one. Consider choosing a Long-Term Support (“LTS”) version. (With TSD p33/p697 access, see also `/tsd/pXX/data/durable/database/redcap`).
 
 ## Import Files to TSD
 Download the docker images (`mysql.tar.gz`, `phpmyadmin.tar.gz`, `webserver.tar.gz` and `cron.tar.gz` files) from [here](dockerimages) to your local machine.
@@ -71,12 +72,15 @@ Before testing the loaded images, adapt the backup directory in line 45 of `dock
 ```
 <!-- NB! Note that the above files contain a hard-coded account name and password for the SQL database. Feel free to change it for added security. Then remember to update the commands below (see e.g. [here](#first-time-configuration) ) with your new SQL account name and password. -->
 
-The file [.env](.env) defines variables that are used across containers. Feel free to adapt the login credentials for the MySQL database, i.e. adapt
+The file [.env](.env) defines variables that are used across containers. Feel free to adapt the prefix which is added to container, volume and network names during the build or the login credentials for the MySQL database:
 ```bash
+PREFIX=
 MYSQL_DATABASE=redcap
 MYSQL_ROOT_PASSWORD=norment123
 MYSQL_REDCAP_USER=norment_admin
 ```
+
+To make it transparent where this prefix is exactly used throughout this README, we executed `source .env` to make the prefix variable available to the shell. In case you defined an empty string or an easy name (e.g., `redcap_`), feel free to drop `${PREFIX}` in the commands below and replace it with your string accordingly.
 
 Having set the backup path and the MySQL credentials, you can try running
 ```bash
@@ -97,10 +101,10 @@ Extract the REDCap zip file into `$REDCAPDIR` and:
 
 - update the `database.php` file located [here](webserver/database.php) and place it in the REDCap directory or edit the file manually to adapt the MySQL configuration of REDCap by changing lines 6–19 to:
   ```php
-  $hostname 	= database;
-  $db 		= $_ENV['MYSQL_DATABASE'];
-  $username 	= $_ENV['MYSQL_REDCAP_USER'];
-  $password 	= $_ENV['MYSQL_ROOT_PASSWORD'];
+  $hostname   = database;
+  $db     = $_ENV['MYSQL_DATABASE'];
+  $username   = $_ENV['MYSQL_REDCAP_USER'];
+  $password   = $_ENV['MYSQL_ROOT_PASSWORD'];
   ```
 
 - enable the TSD-specific LDAP authentication by adapting the LDAP connection information under `$REDCAPDIR/redcap/webtools2/ldap/ldap_config.php`, or use [this](webserver/ldap_config.php) file directly:
@@ -127,10 +131,10 @@ Extract the REDCap zip file into `$REDCAPDIR` and:
 Copy the REDCap directory into the web server volume via
 
 ```bash
-podman cp $REDCAPDIR/redcap redcap_webserver_1:/var/www/html/
+podman cp $REDCAPDIR/redcap ${PREFIX}webserver:/var/www/html/
 ```
 
-The name of the volume should be `redcap_webserver_1`. If that is not the case, please adapt the name in the command (all docker volumes can be listed via `podman volume ls`).
+The name of the volume should be `${PREFIX}webserver`. If that is not the case, please adapt the name in the command (all docker volumes can be listed via `podman volume ls`).
 
 See [here](#docker-volumes) for brief information about docker volumes and how we used them for REDcap deployment.
 
@@ -166,17 +170,17 @@ in the SQL tab.
 
 Once adding TSD user credentials works, reverse the authentication once more to make yourself or the respective users admins via `Control Center` &rarr; `Administrator Privileges`.
 
-To enable that API Tokens can be generated by users without the admins's approval, go to `User Settings` &rarr; `General User Settings` and select `Yes, allow ALL users to generate API tokens on their own`.
+To enable API tokens to be generated by users without the admins's approval, go to `User Settings` &rarr; `General User Settings` and select `Yes, allow ALL users to generate API tokens on their own`.
 
 ## Restore SQL database Backups
 To restore the REDCap database using the `mysqldump` utility (after a new install; remember that the installed version of the REDcap must precisely match the version used to generate SQL backup!) unzip the backup file and run:
 ```bash
-cat SQL_BACKUP_FILE | podman exec -i redcap_database_1 /usr/bin/mysql -u root --password=norment123 redcap
+cat SQL_BACKUP_FILE | podman exec -i ${PREFIX}database /usr/bin/mysql -u root --password=norment123 redcap
 ```
 
 And restart the REDCap database container via
 ```bash
-podman restart redcap_database_1
+podman restart ${PREFIX}database
 ```
 
 ## Upgrade REDCap to a Newer Version
@@ -184,7 +188,7 @@ Following the steps for the REDCap installation, version-specific entries were a
 
 To properly upgrade REDCap, note down the current version of the REDCap instance (it will be needed later). Download an "Upgrade Package" of choice from [here](https://redcap.vanderbilt.edu/community/custom/download.php) (see also the "Upgrade Instructions.txt" in the downloaded zip file). Import the `redcapX.X.X_upgrade.zip` file to `$REDCAPDIR` and unzip the archive. Copy the version-specific directory to the webserver volume via:
 ```bash
-podman cp $REDCAPDIR/redcap/* redcap_webserver_1:/var/www/html/redcap/
+podman cp $REDCAPDIR/redcap/* ${PREFIX}webserver:/var/www/html/redcap/
 ```
 
 Perform the upgrade via a browser: 
@@ -194,8 +198,19 @@ pXX-podman:8000/redcap/redcap_vX.X.X/upgrade.php
 
 and follow the displayed steps. If the update was successful, remove the prior REDCap version via
 ``` bash
-podman exec redcap_webserver_1 rm -rf ./redcap/redcap_vX.X.X
+podman exec ${PREFIX}webserver rm -rf ./redcap/redcap_vX.X.X
 ```
+
+## Multiple Instances
+Copy `docker-compose.yml` and `.env` to a new directory. Adapt the backup path in line 54 of the former and adapt the prefix and ports in the latter:
+
+``` bash
+PREFIX=redcap_dev
+PHPMYADMIN_PORT=9009
+REDCAP_PORT=8009
+```
+
+From that directory, execute `docker-compose up -d` and proceed with the steps [above](#edit-redcap-configuration-files).
 
 ## Frequently Asked Questions
 <!-- If REDCap is not loading through the browser, restart the docker daemon service on pXX-podman
@@ -213,15 +228,15 @@ Tracking the output of all containers defined in `docker-compose.yml`
 docker-compose logs --tail=0 --follow
 ```
 
-In case you want to adapt the user credentials for the MySQL database after you run the `docker-compose.yml` via `docker-compose up -d`, you need update the changes. Before running the commands below, make sure your shell's cd is where `.env` is located. Then add the updated user credentials to the database via
+In case you want to adapt the user credentials for the MySQL database after you run the `docker-compose.yml` via `docker-compose up -d`, you need to update the changes. Before running the commands below, make sure your shell's cd is where `.env` is located. Then add the updated user credentials to the database via
 ```bash
 source .env
-podman exec -i redcap_database_1 mysql -uroot -p${MYSQL_ROOT_PASSWORD} -e "CREATE DATABASE IF NOT EXISTS ${MYSQL_DATABASE};"
-podman exec -i redcap_database_1 mysql -uroot -p${MYSQL_ROOT_PASSWORD} -e "CREATE USER ${MYSQL_REDCAP_USER}@'%' IDENTIFIED WITH mysql_native_password BY '${MYSQL_ROOT_PASSWORD}';"
-podman exec -i redcap_database_1 mysql -uroot -p${MYSQL_ROOT_PASSWORD} -e "GRANT SELECT, INSERT, UPDATE, DELETE ON ${MYSQL_DATABASE}.* TO '${MYSQL_REDCAP_USER}'@'%';"
-podman exec -i redcap_database_1 mysql -uroot -p${MYSQL_ROOT_PASSWORD} -e "FLUSH PRIVILEGES;"
+podman exec -i ${PREFIX}database mysql -uroot -p${MYSQL_ROOT_PASSWORD} -e "CREATE DATABASE IF NOT EXISTS ${MYSQL_DATABASE};"
+podman exec -i ${PREFIX}database mysql -uroot -p${MYSQL_ROOT_PASSWORD} -e "CREATE USER ${MYSQL_REDCAP_USER}@'%' IDENTIFIED WITH mysql_native_password BY '${MYSQL_ROOT_PASSWORD}';"
+podman exec -i ${PREFIX}database mysql -uroot -p${MYSQL_ROOT_PASSWORD} -e "GRANT SELECT, INSERT, UPDATE, DELETE ON ${MYSQL_DATABASE}.* TO '${MYSQL_REDCAP_USER}'@'%';"
+podman exec -i ${PREFIX}database mysql -uroot -p${MYSQL_ROOT_PASSWORD} -e "FLUSH PRIVILEGES;"
 ```
-Alternatively, you can also delete the relevant one via `docker volume rm redcap_redcap_mysql_datavolume`. This step is needed as during the first initializtion the MySQL container runs [init.sh](mysql/init.sh) which executes these commands once (see [here](https://hub.docker.com/_/mysql/) under "Initializing a fresh instance").
+Alternatively, you can also delete the relevant one via `docker volume rm ${PREFIX}mysql_datavolume`. This step is needed as during the first initialization the MySQL container runs [init.sh](mysql/init.sh) which executes these commands once (see [here](https://hub.docker.com/_/mysql/) under "Initializing a fresh instance").
 
 Need to adapt the file upload and memory limit settings? The web server docker container contains the php configuration file needed to update the file upload size settings. Change the variables in the `php.ini` file (inside web server container `/usr/local/etc/php`) `post_max_size` and `upload_max_filesize` to a higher value (currently set to 10 GB). Set the value of the variable `memory_limit` to 10 GB. [Here](webserver/php_uploads.ini) are the settings we used.
 
