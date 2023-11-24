@@ -39,7 +39,6 @@ Download the docker images (`mysql.tar.gz`, `phpmyadmin.tar.gz`, `webserver.tar.
 Also, download the following files (also to your local machine):
 * [docker-compose.yml](docker-compose.yml)
 * [database.php](webserver/database.php)
-* [php_uploads.ini](webserver/php_uploads.ini)
 * [ldap_config.php](webserver/ldap_config.php)
 * [.env](.env)
 
@@ -231,7 +230,7 @@ Tracking the output of all containers defined in `docker-compose.yml`
 docker-compose logs --tail=0 --follow
 ```
 
-Need to adapt the file upload and memory limit settings? The web server docker container contains the php configuration file needed to update the file upload size settings. Change the variables in the `php.ini` file (inside web server container `/usr/local/etc/php`) `post_max_size` and `upload_max_filesize` to a higher value (currently set to 10 GB). Set the value of the variable `memory_limit` to 10 GB. [Here](webserver/php_uploads.ini) are the settings we used.
+For the webserver, settings such as upload or memory limit settings can be changed by editing `/usr/local/etc/php/php.ini`. We adapted relevant values already with [phpinit.sh](webserver/phpinit.sh), but they can be further changed on the running container if needed.
 
 If you have trouble using `vim` execute the `“set mouse=”` command within the container as described [here](https://vi.stackexchange.com/questions/18001/why-cant-i-paste-commands-into-vi) and restart the docker web server with `podman restart dockername`.
 
