@@ -141,7 +141,7 @@ See [here](#docker-volumes) for brief information about docker volumes and how w
 ##  First-time Configuration
 Access REDCap from your browser on `pXX-podman.tsd.usit.no:8000/redcap/install.php`, which should display instructions for REDCap deployment.
 
-* Step 1 of the instructions can be skipped as it's already executed by MYSQL's [init.sh](mysql/init.sh) script.
+* Step 1 of the instructions can be skipped as it's already executed with [init.sh](mysql/init.sh) script.
 
 * Step 2 should also succeed, showing green-colored ``Connection to the MySQL database 'redcap' was successful!`` text. If you have an error it's likely related to the connection to the database, i.e. the problem is likely in `database.php` file. 
 
@@ -179,7 +179,7 @@ gzip -dk SQL_BACKUP_FILE.sql.gz
 ```
 and run:
 ```bash
-cat SQL_BACKUP_FILE.sql | podman exec -i ${PREFIX}database /usr/bin/mysql -u root --password=${MYSQL_ROOT_PASSWORD} redcap
+cat SQL_BACKUP_FILE.sql | podman exec -i ${PREFIX}database /usr/bin/mysql -u root --password=${MYSQL_ROOT_PASSWORD} ${MYSQL_DATABASE}
 ```
 
 And restart the REDCap database container via
