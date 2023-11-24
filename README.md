@@ -141,17 +141,17 @@ See [here](#docker-volumes) for brief information about docker volumes and how w
 ##  First-time Configuration
 Access REDCap from your browser on `pXX-podman.tsd.usit.no:8000/redcap/install.php`, which should display instructions for REDCap deployment.
 
-Step 1 of the instructions can be skipped as it's already executed by MYSQL's [init.sh](mysql/init.sh) script.
+* Step 1 of the instructions can be skipped as it's already executed by MYSQL's [init.sh](mysql/init.sh) script.
 
-Step 2 should also succeed, showing green-colored ``Connection to the MySQL database 'redcap' was successful!`` text. If you have an error it's likely related to the connection to the database, i.e. the problem is likely in `database.php` file. 
+* Step 2 should also succeed, showing green-colored ``Connection to the MySQL database 'redcap' was successful!`` text. If you have an error it's likely related to the connection to the database, i.e. the problem is likely in `database.php` file. 
 
-Step 3 is optional. Feel free to modify the parameters, or keep them as defaults.
+* Step 3 is optional. Feel free to modify the parameters, or keep them as defaults.
 
 Press `Generate SQL install script`, and copy the prompted SQL commands. From a browser, log in to phpMyAdmin (`pXX-podman.tsd.usit.no:9000`). NB! At this step use the **root** user credentials (root, $MYSQL_ROOT_PASSWORD (see [.env](.env), the default password is "redcap"; do not confuse *root* user with $MYSQL_REDCAP_USER also defined in the [.env](.env) - you should not use $MYSQL_REDCAP_USER in phpMyAdmin for connecting to MySQL database). Once phpMyAdmin is connected to the MySQL database, to the SQL tab, paste the copied SQL commands, and press `Go`. 
 
-Some checks likely fail because of a lack of internet access, while other things can be resolved after login.
+Proceed by clicking on `REDCap Configuration Check`. Some checks likely fail because of a lack of internet access, while other things can be resolved after login.
 
-If the URL was not altered, a REDCap instance should now be accessible via `pXX-podman.tsd.usit.no:8000/redcap`. The instance can be stopped by terminating the run dockers via
+If the URL was not altered, a REDCap instance should now be accessible via `pXX-podman.tsd.usit.no:8000/redcap`. The instance can be stopped by terminating the running containers via
 
 ```bash
 docker-compose down
@@ -233,7 +233,7 @@ Tracking the output of all containers defined in `docker-compose.yml`
 docker-compose logs --tail=0 --follow
 ```
 
-For the web server, settings such as upload or memory limit settings can be changed by editing `/usr/local/etc/php/php.ini`. We adapted relevant values already with [phpinit.sh](webserver/phpinit.sh), but they can be further changed on the running container if needed.
+For the web server, settings such as upload or memory limit settings can be changed by editing `/usr/local/etc/php/php.ini`. We adapted relevant values already with [phpinit.sh](webserver/phpinit.sh). They can be further changed on the running container if needed.
 
 If you have trouble using `vim` execute the `“set mouse=”` command within the container as described [here](https://vi.stackexchange.com/questions/18001/why-cant-i-paste-commands-into-vi) and restart the docker web server with `podman restart ${PREFIX}webserver`.
 
@@ -243,9 +243,9 @@ To try REDCap on your local machine (given the cloned repository and the `.tar.g
   - REDCap: http://localhost:8000/redcap
 
 ## Docker Volumes
-As defined in [docker-compose.yml](docker-compose.yml) file, we use two volumes for REDCap deployment. 
-The first volume, ``redcap_mysql_datavolume``, is responsible for storing SQL database files. The second volume, ``redcap_webserver``, stores REDCap software files, which you upgrade to move to a newer version of REDCap software.
-These docker volumes are [persistent](https://docs.docker.com/storage/volumes/), in a sense that after ``docker-compose down`` the volumes are kept, and the same volumes are used after docker containers are re-started with ``docker-compose up`` (They can be removed via `docker-compose down --volumes`).
+As defined in [docker-compose.yml](docker-compose.yml), we use two volumes for REDCap deployment. 
+The first volume, ``mysql_datavolume``, is responsible for storing SQL database files. The second volume, ``webserver``, stores REDCap software files, which you upgrade to move to a newer version of REDCap software.
+These docker volumes are [persistent](https://docs.docker.com/storage/volumes/), in a sense that after ``docker-compose down`` the volumes are kept, and the same volumes are used after the containers are re-started with ``docker-compose up`` (they can be removed via `podman volume rm <<volume_name>>` or `docker-compose down --volumes`).
 
 These volumes should be locally located under
 
