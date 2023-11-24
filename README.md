@@ -22,16 +22,16 @@
 ## Getting Started 
 This [repository](https://github.com/norment/redcap) contains [REDCap](https://www.project-redcap.org/) deployment procedures customized for [TSD environment](https://www.uio.no/tjenester/it/forskning/sensitiv/).
 
-This README covers the Podman-based REDCap deployment procedure for a [TSD](https://www.uio.no/english/services/it/research/sensitive-data/index.html) project. Optionally, you could first test REDcap deployment on your local machine, as described [here](#local-testing). For additional details see [CONTRIBUTING.md](CONTRIBUTING.md).
+This README covers the Podman-based REDCap deployment procedure for a [TSD](https://www.uio.no/english/services/it/research/sensitive-data/index.html) project. Optionally, you could first test REDCap deployment on your local machine, as described [here](#local-testing). For additional details see [CONTRIBUTING.md](CONTRIBUTING.md).
 
-If you're new to [Podman](https://podman.io/), check the information [here](https://www.redhat.com/en/topics/containers/what-is-podman). As pointed out, "Podman is a powerful alternative to [Docker](https://docs.docker.com/get-started/), but the two can also work together". I.e., in case you are more familiar with Docker, most commands are easily interchangeable. 
+If you are new to [Podman](https://podman.io/), check the information [here](https://www.redhat.com/en/topics/containers/what-is-podman). As pointed out, "Podman is a powerful alternative to [Docker](https://docs.docker.com/get-started/), but the two can also work together". I.e., in case you are more familiar with Docker, most commands are easily interchangeable. 
 
 You may also want to register to be a member of [REDCap community](https://redcap.vanderbilt.edu/community/) which provides access to additional documentation and resources beyond what's available on  REDCap's public [website](https://www.project-redcap.org).
 
 ## Prerequisites
 You need to have a “pXX-podman” Linux VM that supports `podman` and `docker-compose` in the TSD project where you want to deploy the REDCap. To find out if such a machine is available try logging in to the “pXX-podman” machine using ssh or Putty, and execute `podman ps` and `docker-compose`. If this does not work, report this to the [TSD service](https://www.uio.no/english/services/it/research/sensitive-data/contact/index.html). If the “pXX-podman“ machine itself is not available, request to create a Linux service VM for your TSD project (suggested specs: 4 GB RAM, 2 VCPUs, and 100 GB storage), and install `podman` and `docker-compose` on that machine.
 
-To deploy REDCap, you need its source code requiring a valid end-user license [agreement](https://projectredcap.org/partners/join/) between Vanderbilt University and your organization. We're in the process of applying for a broad UiO-wide REDCap license, but this is not finalized as of Nov. 2023. If your organization already has such an agreement, download the latest REDCap software zip file from [here](https://redcap.vanderbilt.edu/community/custom/download.php) or apply for one. Consider choosing a Long-Term Support (“LTS”) version. (With TSD p33/p697 access, see also `/tsd/pXX/data/durable/database/redcap`).
+To deploy REDCap, you need its source code requiring a valid end-user license [agreement](https://projectredcap.org/partners/join/) between Vanderbilt University and your organization. We are in the process of applying for a broad UiO-wide REDCap license, but this is not finalized as of Nov. 2023. If your organization already has such an agreement, download the latest REDCap software zip file from [here](https://redcap.vanderbilt.edu/community/custom/download.php) or apply for one. Consider choosing a Long-Term Support (“LTS”) version. (With TSD p33/p697 access, see also `/tsd/pXX/data/durable/database/redcap`).
 
 ## Import Files to TSD
 Download the docker images (`mysql.tar.gz`, `phpmyadmin.tar.gz`, `webserver.tar.gz` and `cron.tar.gz` files) from [here](dockerimages) to your local machine.
@@ -55,7 +55,7 @@ mkdir $REDCAPDIR && cd $REDCAPDIR
 Move all imported files into `$REDCAPDIR`.
 
 Optional: delete all the dangling images and containers (`podman system prune -a`).
-Note that this command does not remove volumes (see `podman volume ls` and `podman volume rm <volume>`, but be extremely careful with these commands as they remove data stored in previous REDcap instances).
+Note that this command does not remove volumes (see `podman volume ls` and `podman volume rm <volume>` or `docker-compose down --volumes`, but be extremely careful with these commands as they remove data stored in previous REDCap instances).
 
 ## Load and Start Docker Images
 Load the docker images
@@ -66,7 +66,7 @@ podman load < mysql.tar.gz
 podman load < cron.tar.gz
 ```
 
-Before testing the loaded images, adapt the backup directory in of `docker-compose.yml` which defines where the database backups are created (daily backups are scheduled through the [cron](https://en.wikipedia.org/wiki/Cron) container).
+Before testing the loaded images, adapt the backup directory in `docker-compose.yml` which defines where the database backups are created (daily backups are scheduled through the [cron](https://en.wikipedia.org/wiki/Cron) container).
 ```bash
 - <<your_backup_directory_path>>:/backup
 ```
@@ -136,21 +136,20 @@ podman cp $REDCAPDIR/redcap ${PREFIX}webserver:/var/www/html/
 
 The name of the respective container should be `${PREFIX}webserver`. If that is not the case, please adapt the name in the command (all docker containers or volumes can be listed via `podman ps` or `podman volume ls`).
 
-See [here](#docker-volumes) for brief information about docker volumes and how we used them for REDcap deployment.
+See [here](#docker-volumes) for brief information about docker volumes and how we used them for REDCap deployment.
 
 ##  First-time Configuration
+Access REDCap from your browser on `pXX-podman.tsd.usit.no:8000/redcap/install.php`, which should display instructions for REDCap deployment.
 
-Access REDCap from your browser on `pXX-podman.tsd.usit.no:8000/redcap/install.php`, which should display instructions for REDcap deployment.
-
-Step 1 of the instrtuctions can be skipped as it's already executed by MYSQL's [init.sh](mysql/init.sh) script.
+Step 1 of the instructions can be skipped as it's already executed by MYSQL's [init.sh](mysql/init.sh) script.
 
 Step 2 should also succeed, showing green-colored ``Connection to the MySQL database 'redcap' was successful!`` text. If you have an error it's likely related to the connection to the database, i.e. the problem is likely in `database.php` file. 
 
 Step 3 is optional. Feel free to modify the parameters, or keep them as defaults.
 
-Press `Generate SQL install script`, and copy the prompted SQL commands. From a browser, log in to phpMyAdmin (`pXX-podman.tsd.usit.no:9000`). NB! At this step use the **root** user credentials (root, $MYSQL_ROOT_PASSWORD (see [.env](.env), default password is "redcap"; do not confuse *root* user with $MYSQL_REDCAP_USER also defined in the [.env](.env) - you should not use $MYSQL_REDCAP_USER in phpMyAdmin for connecting to MYSQL database). Once phpMyAdmin is connected to MYSQL database, to the SQL tab, paste the copied SQL commands, and press `Go`. 
+Press `Generate SQL install script`, and copy the prompted SQL commands. From a browser, log in to phpMyAdmin (`pXX-podman.tsd.usit.no:9000`). NB! At this step use the **root** user credentials (root, $MYSQL_ROOT_PASSWORD (see [.env](.env), the default password is "redcap"; do not confuse *root* user with $MYSQL_REDCAP_USER also defined in the [.env](.env) - you should not use $MYSQL_REDCAP_USER in phpMyAdmin for connecting to MySQL database). Once phpMyAdmin is connected to the MySQL database, to the SQL tab, paste the copied SQL commands, and press `Go`. 
 
-Some checks likely fail because of a lack of internet access, while other things can be resolved (e.g., `cron jobs`) after login (more details further down).
+Some checks likely fail because of a lack of internet access, while other things can be resolved after login.
 
 If the URL was not altered, a REDCap instance should now be accessible via `pXX-podman.tsd.usit.no:8000/redcap`. The instance can be stopped by terminating the run dockers via
 
@@ -174,7 +173,7 @@ Once adding TSD user credentials works, reverse the authentication once more to 
 To enable API tokens to be generated by users without the admins's approval, go to `User Settings` &rarr; `General User Settings` and select `Yes, allow ALL users to generate API tokens on their own`.
 
 ## Restore SQL database Backups
-To restore the REDCap database using the `mysqldump` utility (after a new install; remember that the installed version of the REDcap must precisely match the version used to generate SQL backup!) unzip the backup file and run:
+To restore the REDCap database using the `mysqldump` utility (after a new install; remember that the installed version of the REDCap must precisely match the version used to generate SQL backup!) unzip the backup file and run:
 ```bash
 cat SQL_BACKUP_FILE | podman exec -i ${PREFIX}database /usr/bin/mysql -u root --password=${MYSQL_ROOT_PASSWORD} redcap
 ```
@@ -203,8 +202,8 @@ podman exec ${PREFIX}webserver rm -rf ./redcap/redcap_vX.X.X
 ```
 
 ## Multiple Instances
-It is possible to run multiple instances of REDCap on the same machine, for example one for production, and one for development. Do start the second instance,
-copy `docker-compose.yml` and `.env` to a new directory (e.g. ``redcap_dev``). Adapt the backup path in `docker-compose.yml` and adapt the prefix and ports in  `.env` file:
+It is possible to run multiple instances of REDCap on the same machine, for example, one for production, and one for development. To start the second instance,
+copy `docker-compose.yml` and `.env` to a new directory (e.g. ``redcap_dev``). Adapt the backup path in `docker-compose.yml` and adapt the prefix and ports in  the `.env` file:
 
 ``` bash
 PREFIX=redcap_dev_
@@ -230,9 +229,9 @@ Tracking the output of all containers defined in `docker-compose.yml`
 docker-compose logs --tail=0 --follow
 ```
 
-For the webserver, settings such as upload or memory limit settings can be changed by editing `/usr/local/etc/php/php.ini`. We adapted relevant values already with [phpinit.sh](webserver/phpinit.sh), but they can be further changed on the running container if needed.
+For the web server, settings such as upload or memory limit settings can be changed by editing `/usr/local/etc/php/php.ini`. We adapted relevant values already with [phpinit.sh](webserver/phpinit.sh), but they can be further changed on the running container if needed.
 
-If you have trouble using `vim` execute the `“set mouse=”` command within the container as described [here](https://vi.stackexchange.com/questions/18001/why-cant-i-paste-commands-into-vi) and restart the docker web server with `podman restart dockername`.
+If you have trouble using `vim` execute the `“set mouse=”` command within the container as described [here](https://vi.stackexchange.com/questions/18001/why-cant-i-paste-commands-into-vi) and restart the docker web server with `podman restart ${PREFIX}webserver`.
 
 ## Local Testing
 To try REDCap on your local machine (given the cloned repository and the `.tar.gz` files), follow the steps under [REDCap Deployment](#redcap-deployment), but with differing addresses:
@@ -240,8 +239,8 @@ To try REDCap on your local machine (given the cloned repository and the `.tar.g
   - REDCap: http://localhost:8000/redcap
 
 ## Docker Volumes
-As defined in [docker-compose.yml](docker-compose.yml) file, we use two volumes for REDcap deployment. 
-The first volume, ``redcap_mysql_datavolume``, is responsible for storing SQL database files. The second volume, ``redcap_webserver``, stores REDcap software files, which you upgrade to move to a newer version of REDcap software.
+As defined in [docker-compose.yml](docker-compose.yml) file, we use two volumes for REDCap deployment. 
+The first volume, ``redcap_mysql_datavolume``, is responsible for storing SQL database files. The second volume, ``redcap_webserver``, stores REDCap software files, which you upgrade to move to a newer version of REDCap software.
 These docker volumes are [persistent](https://docs.docker.com/storage/volumes/), in a sense that after ``docker-compose down`` the volumes are kept, and the same volumes are used after docker containers are re-started with ``docker-compose up`` (They can be removed via `docker-compose down --volumes`).
 
 These volumes should be locally located under
