@@ -151,7 +151,7 @@ Access REDCap from your browser on `pXX-podman.tsd.usit.no:8000/redcap/install.p
 
 Press `Generate SQL install script`, and copy the prompted SQL commands. From a browser, log in to phpMyAdmin (`pXX-podman.tsd.usit.no:9000`). NB! At this step use the **root** user credentials (root, $MYSQL_ROOT_PASSWORD (see [.env](.env), the default password is "redcap"; do not confuse *root* user with $MYSQL_REDCAP_USER also defined in the [.env](.env) - you should not use $MYSQL_REDCAP_USER in phpMyAdmin for connecting to MySQL database). Once phpMyAdmin is connected to the MySQL database, to the SQL tab, paste the copied SQL commands, and press `Go`. 
 
-Proceed by clicking on `REDCap Configuration Check`. Some checks likely fail because of a lack of internet access, while other things can be resolved after login.
+* Step 5 proceed by clicking on `REDCap Configuration Check`. Some checks likely fail because of a lack of internet access, while other things can be resolved after login.
 
 If the URL was not altered, a REDCap instance should now be accessible via `pXX-podman.tsd.usit.no:8000/redcap`. The instance can be stopped by terminating the running containers via
 
