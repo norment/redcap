@@ -153,11 +153,7 @@ Press `Generate SQL install script`, and copy the prompted SQL commands. From a 
 
 * Step 5 proceed by clicking on `REDCap Configuration Check`. Some checks likely fail because of a lack of internet access, while other things can be resolved after login.
 
-If the URL was not altered, a REDCap instance should now be accessible via `pXX-podman.tsd.usit.no:8000/redcap`. The instance can be stopped by terminating the running containers via
-
-```bash
-docker-compose down
-```
+If the URL was not altered, a REDCap instance should now be accessible via `pXX-podman.tsd.usit.no:8000/redcap`.
 
 ## Registering TSD users through LDAP
 Having set the TSD-specific settings in the `ldap_config.php` (see [here](#edit-redcap-configuration-files)), configure the authentication method in REDCap by navigating to `Control Center` &rarr; `Security & Authentication`, and changing the authentication method to `LDAP`. Confirm by clicking on `Save Changes` at the bottom of the page. 
