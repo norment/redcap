@@ -99,12 +99,14 @@ The logs can be checked using the command `docker-compose logs` or to see the ta
 ## Edit REDCap Configuration Files
 Extract the REDCap zip file into `$REDCAPDIR` and:
 
-- update the `database.php` file located [here](webserver/database.php) and place it in the REDCap directory or edit the file manually to adapt the MySQL configuration of REDCap by changing lines 6–19 to:
+- update the `database.php` file located [here](webserver/database.php) and place it in the REDCap directory or edit the file manually to adapt the MySQL configuration of REDCap by changing lines 6–19 and line 41 as follows:
   ```php
   $hostname   = database;
   $db     = $_ENV['MYSQL_DATABASE'];
   $username   = $_ENV['MYSQL_REDCAP_USER'];
   $password   = $_ENV['MYSQL_ROOT_PASSWORD'];
+
+  $salt=$_ENV['REDCAP_SALT'];
   ```
 
 - enable the TSD-specific LDAP authentication by adapting the LDAP connection information under `$REDCAPDIR/redcap/webtools2/ldap/ldap_config.php`, or use [this](webserver/ldap_config.php) file directly:
