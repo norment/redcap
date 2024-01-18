@@ -1,3 +1,4 @@
 mysql.tar.gz filter=lfs diff=lfs merge=lfs -text
 phpmyadmin.tar.gz filter=lfs diff=lfs merge=lfs -text
 webserver.tar.gz filter=lfs diff=lfs merge=lfs -text
+cron.tar.gz filter=lfs diff=lfs merge=lfs -text
