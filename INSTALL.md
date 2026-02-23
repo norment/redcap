@@ -34,7 +34,31 @@ You need to have a “pXX-podman” Linux VM that supports `podman` and `docker-
 To deploy REDCap, you need its source code requiring a valid end-user license [agreement](https://projectredcap.org/partners/join/) between Vanderbilt University and your organization. UiO is in the possession of a UiO-wide REDCap license. Download the latest REDCap software zip file from [here](https://redcap.vumc.org/community/custom/download.php) or apply for an such an agreement if outside of UiO. Consider choosing a Long-Term Support (“LTS”) version. (With TSD p33/p697 access, see also `/tsd/pXX/data/durable/database/redcap`).
 
 ## Import Files to TSD
-Download the docker images (`mysql.tar.gz`, `phpmyadmin.tar.gz`, `webserver.tar.gz` and `cron.tar.gz` files) from [here](dockerimages) to your local machine.
+TSD has no internet access. Prepare the container images on a machine with internet access using `docker`, then import the resulting `.zip` bundle to TSD.
+
+On a machine with internet access, fetch the images from GHCR and create a single offline bundle:
+```bash
+export IMAGE_TAG=latest  # set this to the tag you want to deploy
+
+docker pull ghcr.io/norment/redcap-webserver:${IMAGE_TAG}
+docker pull ghcr.io/norment/redcap-phpmyadmin:${IMAGE_TAG}
+docker pull ghcr.io/norment/redcap-mysql:${IMAGE_TAG}
+docker pull ghcr.io/norment/redcap-cron:${IMAGE_TAG}
+
+docker save \
+  ghcr.io/norment/redcap-webserver:${IMAGE_TAG} \
+  ghcr.io/norment/redcap-phpmyadmin:${IMAGE_TAG} \
+  ghcr.io/norment/redcap-mysql:${IMAGE_TAG} \
+  ghcr.io/norment/redcap-cron:${IMAGE_TAG} \
+  -o redcap-images-${IMAGE_TAG}.tar
+
+zip redcap-images-${IMAGE_TAG}.zip redcap-images-${IMAGE_TAG}.tar
+```
+
+If the GHCR packages are private, authenticate before pulling:
+```bash
+echo "$GITHUB_TOKEN" | docker login ghcr.io -u <github-username> --password-stdin
+```
 
 Also, download the following files (also to your local machine):
 * [docker-compose.yml](docker-compose.yml)
@@ -44,7 +68,7 @@ Also, download the following files (also to your local machine):
 
 Also, make sure you have downloaded the REDCap software zip file (e.g. ``redcap11.3.3.zip`` file).
 
-Use https://data.tsd.usit.no to import all the files listed above to your TSD project.
+Use https://data.tsd.usit.no to import all the files listed above to your TSD project, including `redcap-images-${IMAGE_TAG}.zip`.
 
 Login to TSD, and connect to the pXX-podman machine (`ssh pXX-podman.tsd.usit.no`). Then execute the following in the terminal:
 ```bash
@@ -58,12 +82,11 @@ Optional: delete all the dangling images and containers (`podman system prune -a
 Note that this command does not remove volumes (see `podman volume ls` and `podman volume rm <volume>` or `docker-compose down --volumes`, but be extremely careful with these commands as they remove data stored in previous REDCap instances).
 
 ## Load and Start Docker Images
-Load the docker images
+On TSD, load the images with `podman`:
 ```bash
-podman load < webserver.tar.gz
-podman load < phpmyadmin.tar.gz
-podman load < mysql.tar.gz
-podman load < cron.tar.gz
+export IMAGE_TAG=latest  # set this to match .env
+unzip redcap-images-${IMAGE_TAG}.zip
+podman load -i redcap-images-${IMAGE_TAG}.tar
 ```
 
 Before testing the loaded images, adapt the backup directory in `docker-compose.yml` which defines where the database backups are created (daily backups are scheduled through the [cron](https://en.wikipedia.org/wiki/Cron) container).
@@ -72,8 +95,9 @@ Before testing the loaded images, adapt the backup directory in `docker-compose.
 ```
 <!-- NB! Note that the above files contain a hard-coded account name and password for the SQL database. Feel free to change it for added security. Then remember to update the commands below (see e.g. [here](#first-time-configuration) ) with your new SQL account name and password. -->
 
-The file [.env](.env) defines variables that are used across containers. Feel free to adapt the prefix which is added to container, volume and network names during the build or the login credentials for the MySQL database:
+The file [.env](.env) defines variables that are used across containers. Ensure `IMAGE_TAG` matches the tag you pulled from GHCR, and feel free to adapt the prefix which is added to container, volume and network names during the build or the login credentials for the MySQL database:
 ```bash
+IMAGE_TAG=latest
 PREFIX=
 MYSQL_DATABASE=redcap
 MYSQL_ROOT_PASSWORD=redcap
@@ -238,9 +262,38 @@ For the web server, settings such as upload or memory limit settings can be chan
 If you have trouble using `vim` execute the `“set mouse=”` command within the container as described [here](https://vi.stackexchange.com/questions/18001/why-cant-i-paste-commands-into-vi) and restart the docker web server with `podman restart ${PREFIX}webserver`.
 
 ## Local Testing
-To try REDCap on your local machine (given the cloned repository and the `.tar.gz` files), follow the steps under [REDCap Deployment](#redcap-deployment), but with differing addresses:
-  - phpMyAdmin: http://localhost:9000
-  - REDCap: http://localhost:8000/redcap
+Local testing is Docker-based and differs from TSD in a few key ways: images are pulled directly from GHCR, `REDCAPDIR` points to the root of this GitHub repo (no file import/copy steps), LDAP is not configured, and backups are disabled.
+
+1. Place `redcap11.3.3.zip` (or newer) in the repo root and unzip it there:
+```bash
+unzip redcap11.3.3.zip -d .
+```
+
+2. Pull images from GHCR with Docker (ensure `IMAGE_TAG` matches `.env`):
+```bash
+export IMAGE_TAG=latest
+docker pull ghcr.io/norment/redcap-webserver:${IMAGE_TAG}
+docker pull ghcr.io/norment/redcap-phpmyadmin:${IMAGE_TAG}
+docker pull ghcr.io/norment/redcap-mysql:${IMAGE_TAG}
+docker pull ghcr.io/norment/redcap-cron:${IMAGE_TAG}
+```
+
+3. Do not configure backups. Disable the `cron` service (comment it out in `docker-compose.yml`) or start without it:
+```bash
+docker compose up -d --scale cron=0
+```
+
+4. Use the provided `webserver/database.php` (no LDAP integration for local testing), and copy ``redcap/`` folder into the container:
+```bash
+source .env
+cp webserver/database.php redcap/database.php
+docker cp redcap ${PREFIX}webserver:/var/www/html/
+```
+
+Navigate to http://localhost:8000/redcap/install.php and follow the [First-time Configuration](#first-time-configuration) section.
+The local endpoints are:
+- phpMyAdmin: http://localhost:9000
+- REDCap: http://localhost:8000/redcap
 
 ## Docker Volumes
 As defined in [docker-compose.yml](docker-compose.yml), we use two volumes for REDCap deployment. 

@@ -1,7 +1,7 @@
 version: '3.8'
 services:
     webserver:
-        image: webserver
+        image: ghcr.io/norment/redcap-webserver:${IMAGE_TAG}
         depends_on:
             - database
         container_name: ${PREFIX}webserver
@@ -19,7 +19,7 @@ services:
     phpmyadmin:
         depends_on:
             - database
-        image: phpmyadmin
+        image: ghcr.io/norment/redcap-phpmyadmin:${IMAGE_TAG}
         restart: always
         container_name: ${PREFIX}phpmyadmin
         env_file: .env
@@ -34,7 +34,7 @@ services:
             - network
 
     database:
-        image: mysql
+        image: ghcr.io/norment/redcap-mysql:${IMAGE_TAG}
         restart: always
         container_name: ${PREFIX}database
         env_file: .env
@@ -46,7 +46,7 @@ services:
     cron:
         depends_on:
             - database
-        image: cron
+        image: ghcr.io/norment/redcap-cron:${IMAGE_TAG}
         container_name: ${PREFIX}cron
         restart: always
         env_file: .env
