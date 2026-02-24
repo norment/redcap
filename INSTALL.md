@@ -268,6 +268,7 @@ docker compose up -d --scale cron=0
 ```bash
 source .env
 bash scripts/configure_database_php.sh redcap/database.php
+chmod -R 777 redcap
 docker cp redcap ${PREFIX}webserver:/var/www/html/
 ```
 

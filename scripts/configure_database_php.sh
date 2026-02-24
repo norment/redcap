@@ -44,7 +44,7 @@ for needle in "MYSQL_DATABASE" "MYSQL_REDCAP_USER" "MYSQL_ROOT_PASSWORD" "REDCAP
   fi
 done
 
-if ! grep -Eq "^[[:space:]]*\\$hostname[[:space:]]*=[[:space:]]*'database';" "$tmp"; then
+if ! grep -Eq '^[[:space:]]*\$hostname[[:space:]]*=[[:space:]]*'"'"'database'"'"';' "$tmp"; then
   echo "error: failed to set hostname to database in $target" >&2
   rm -f "$tmp"
   exit 1

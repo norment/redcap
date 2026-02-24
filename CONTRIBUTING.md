@@ -24,7 +24,7 @@ Use `docker` for building and pushing.
 Pick a tag and authenticate to GHCR:
 ```bash
 export IMAGE_TAG=latest  # set this to a versioned tag for releases
-echo "$GITHUB_TOKEN" | docker login ghcr.io -u <github-username> --password-stdin
+echo "$GHCR_LOGIN" | docker login ghcr.io -u $GHCR_USERNAME --password-stdin
 ```
 
 Build and tag the images:
@@ -46,7 +46,3 @@ docker push ghcr.io/norment/redcap-cron:${IMAGE_TAG}
 If you publish a new tag, update `IMAGE_TAG` in `.env` to match.
 
 Note: `podman load` on TSD preserves the image name/tag stored in the tar. Ensure the offline bundle is created from the GHCR-tagged images (e.g., `ghcr.io/norment/redcap-webserver:${IMAGE_TAG}`), otherwise TSD users will need to retag after loading.
-
-## Legacy information
-
-We also have deprecated instructions to install REDCap [here](https://docs.google.com/document/d/1ENwkYVIONqyvbD22SQG9SQkmu05OXZmm/edit?dls=true).
