@@ -8,6 +8,13 @@ This is also an operational log of our REDcap deployment and management.
 * changes to infrastructure (e.g. switching to a new service VM, changing what service user we run the service from, etc.)
 * important changes to scripts that manage data within REDcap
 
+## 2026-02-24
+
+- Upgrade container bases for REDCap 16: PHP 8.4 (min PHP >= 8.1), MySQL 8.4 LTS (8.0 nearing EOL), phpMyAdmin 5.2 series, and Ubuntu 24.04 LTS for cron
+- Move MySQL tuning to `/etc/mysql/conf.d/` to match MySQL 8.4 image layout and keep config explicit
+- Replace tracked `webserver/database.php` with a script to patch `redcap/database.php` to read DB credentials and salt from `$_ENV`
+- Add `scripts/README.md` and implement the LDAP helper `configure_ldap_config_usit_tsd.sh`
+
 ## 2026-02-23
 
 - Switch container image distribution to GHCR with offline bundle workflow; remove prebuilt LFS image artifacts

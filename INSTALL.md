@@ -62,11 +62,11 @@ echo "$GITHUB_TOKEN" | docker login ghcr.io -u <github-username> --password-stdi
 
 Also, download the following files (also to your local machine):
 * [docker-compose.yml](docker-compose.yml)
-* [database.php](webserver/database.php)
-* [ldap_config.php](webserver/ldap_config.php)
 * [.env](.env)
+* [scripts/configure_database_php.sh](scripts/configure_database_php.sh)
+* [scripts/configure_ldap_config_usit_tsd.sh](scripts/configure_ldap_config_usit_tsd.sh)
 
-Also, make sure you have downloaded the REDCap software zip file (e.g. ``redcap11.3.3.zip`` file).
+Also, make sure you have downloaded the REDCap software zip file (e.g. ``redcap16.0.11.zip`` file).
 
 Use https://data.tsd.usit.no to import all the files listed above to your TSD project, including `redcap-images-${IMAGE_TAG}.zip`.
 
@@ -123,29 +123,10 @@ The logs can be checked using the command `docker-compose logs` or to see the ta
 ## Edit REDCap Configuration Files
 Extract the REDCap zip file into `$REDCAPDIR` and:
 
-- update the `database.php` file located [here](webserver/database.php) and place it in the REDCap directory or edit the file manually to adapt the MySQL configuration of REDCap by changing lines 6–19 and line 41 as follows:
-  ```php
-  $hostname   = database;
-  $db     = $_ENV['MYSQL_DATABASE'];
-  $username   = $_ENV['MYSQL_REDCAP_USER'];
-  $password   = $_ENV['MYSQL_ROOT_PASSWORD'];
-
-  $salt=$_ENV['REDCAP_SALT'];
-  ```
-
-- enable the TSD-specific LDAP authentication by adapting the LDAP connection information under `$REDCAPDIR/redcap/webtools2/ldap/ldap_config.php`, or use [this](webserver/ldap_config.php) file directly:
-  ```sql
-  $GLOBALS['ldapdsn'] = array( 
-    'url'           => 'ldap://tsd-dc01.tsd.usit.no',
-    'port'          => 389,
-    'version'       => 3,
-    'referrals'     => false,
-    'basedn'        => 'dc=tsd,dc=usit,dc=no',
-    'binddn'        => $_POST['username'].'@tsd.usit.no',
-    'bindpw'        => $_POST['password'],
-    'userattr'      => 'samAccountName',
-    'userfilter'    => '(samAccountName='.$_POST['username'].')' 
-  );
+- run the configuration scripts (see [scripts/README.md](scripts/README.md) for details):
+  ```bash
+  bash scripts/configure_database_php.sh $REDCAPDIR/redcap/database.php
+  bash scripts/configure_ldap_config_usit_tsd.sh $REDCAPDIR/redcap/webtools2/ldap/ldap_config.php
   ```
 
 - make the REDCap directory executable and accessible to all users:
@@ -264,9 +245,9 @@ If you have trouble using `vim` execute the `“set mouse=”` command within th
 ## Local Testing
 Local testing is Docker-based and differs from TSD in a few key ways: images are pulled directly from GHCR, `REDCAPDIR` points to the root of this GitHub repo (no file import/copy steps), LDAP is not configured, and backups are disabled.
 
-1. Place `redcap11.3.3.zip` (or newer) in the repo root and unzip it there:
+1. Place `redcap16.0.11.zip` (or newer) in the repo root and unzip it there:
 ```bash
-unzip redcap11.3.3.zip -d .
+unzip redcap16.0.11.zip -d .
 ```
 
 2. Pull images from GHCR with Docker (ensure `IMAGE_TAG` matches `.env`):
@@ -283,10 +264,10 @@ docker pull ghcr.io/norment/redcap-cron:${IMAGE_TAG}
 docker compose up -d --scale cron=0
 ```
 
-4. Use the provided `webserver/database.php` (no LDAP integration for local testing), and copy ``redcap/`` folder into the container:
+4. Configure `redcap/database.php` to read credentials from `$_ENV` (no LDAP integration for local testing), and copy ``redcap/`` folder into the container:
 ```bash
 source .env
-cp webserver/database.php redcap/database.php
+bash scripts/configure_database_php.sh redcap/database.php
 docker cp redcap ${PREFIX}webserver:/var/www/html/
 ```
 
