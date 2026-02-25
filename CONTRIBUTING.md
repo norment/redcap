@@ -27,14 +27,14 @@ export IMAGE_TAG=latest  # set this to a versioned tag for releases
 echo "$GHCR_LOGIN" | docker login ghcr.io -u $GHCR_USERNAME --password-stdin
 ```
 
-Build and push multi-arch images:
+Build images (host platform by default):
 ```bash
-docker buildx create --use --name redcap-multiarch || docker buildx use redcap-multiarch
-docker buildx inspect --bootstrap
+bash scripts/build_images.sh
+```
 
-docker buildx build --platform linux/amd64,linux/arm64 -t ghcr.io/norment/redcap-webserver:${IMAGE_TAG} --push webserver
-docker buildx build --platform linux/amd64,linux/arm64 -t ghcr.io/norment/redcap-mysql:${IMAGE_TAG} --push mysql
-docker buildx build --platform linux/amd64,linux/arm64 -t ghcr.io/norment/redcap-cron:${IMAGE_TAG} --push cron
+Push multi-arch images to GHCR:
+```bash
+bash scripts/build_images.sh --push
 ```
 
 If you publish a new tag, update `IMAGE_TAG` in `.env` to match.

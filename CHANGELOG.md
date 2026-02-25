@@ -13,6 +13,7 @@ This is also an operational log of our REDcap deployment and management.
 - Make the webserver LDAP build multi-arch by resolving the libdir dynamically
 - Switch phpMyAdmin to the upstream `phpmyadmin:5.2-apache` image and drop the custom Dockerfile/build steps
 - Update compose and installation/contribution instructions to match the new phpMyAdmin source and multi-arch builds
+- Add a build helper script to separate local builds from multi-arch pushes
 
 ## 2026-02-24
 
