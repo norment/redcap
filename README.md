@@ -12,6 +12,11 @@ research data**
 * For official information from USIT TSD, see [here](https://www.uio.no/english/services/it/research/sensitive-data/help/software/redcap.html)
 * For in-depth overview of REDCap functionality, check https://project-redcap.org/, or join [REDCap community](https://projectredcap.org/resources/community/) 
 
+## Container tooling
+
+Deployment on TSD uses `podman`. Local development (building images and testing) should use `docker`.
+See [INSTALL.md](INSTALL.md) for deployment details and [CONTRIBUTING.md](CONTRIBUTING.md) for image build/publish steps.
+
 ## Overview
 
 MultiSense Hub-Node is an initiative designed to support researchers
