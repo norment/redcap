@@ -8,6 +8,13 @@ This is also an operational log of our REDcap deployment and management.
 * changes to infrastructure (e.g. switching to a new service VM, changing what service user we run the service from, etc.)
 * important changes to scripts that manage data within REDcap
 
+## 2026-03-06
+
+- Introduce explicit GHCR image versioning for the REDCap stack.
+- Reserve `1.0.0` for the previously published `latest` images (equivalent to the former LFS bundle content).
+- Reserve `2.0.0` for images rebuilt from the current multi-arch codebase (`linux/amd64` and `linux/arm64`).
+- Keep `latest` for convenience while using semantic version tags for reproducible deployments.
+
 ## 2026-02-25
 
 - Make the webserver LDAP build multi-arch by resolving the libdir dynamically
