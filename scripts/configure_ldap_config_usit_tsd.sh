@@ -10,35 +10,35 @@ if [ ! -f "$target" ]; then
 fi
 
 tmp="$(mktemp)"
-replacement="$(cat <<'EOF'
-$GLOBALS['ldapdsn'] = array(
-  'url'           => 'ldap://tsd-dc01.tsd.usit.no',
-  'port'          => 389,
-  'version'       => 3,
-  'referrals'     => false,
-  'basedn'        => 'dc=tsd,dc=usit,dc=no',
-  'binddn'        => $_POST['username'].'@tsd.usit.no',
-  'bindpw'        => $_POST['password'],
-  'userattr'      => 'samAccountName',
-  'userfilter'    => '(samAccountName='.$_POST['username'].')'
-);
-EOF
-)"
-
-awk -v replacement="$replacement" '
+awk '
   BEGIN {
     replaced = 0
     skipping = 0
+    q = sprintf("%c", 39)
+  }
+  function print_replacement() {
+    print "$GLOBALS[" q "ldapdsn" q "] = array("
+    print "  " q "url" q "           => " q "ldap://tsd-dc01.tsd.usit.no" q ","
+    print "  " q "port" q "          => 389,"
+    print "  " q "version" q "       => 3,"
+    print "  " q "referrals" q "     => false,"
+    print "  " q "basedn" q "        => " q "dc=tsd,dc=usit,dc=no" q ","
+    print "  " q "binddn" q "        => $_POST[" q "username" q "]." q "@tsd.usit.no" q ","
+    print "  " q "bindpw" q "        => $_POST[" q "password" q "],"
+    print "  " q "userattr" q "      => " q "samAccountName" q ","
+    print "  " q "userfilter" q "    => " q "(samAccountName=" q ".$_POST[" q "username" q "]." q ")" q
+    print ");"
   }
   {
-    if (!replaced && $0 ~ /^[[:space:]]*\\$GLOBALS\\[\\x27ldapdsn\\x27\\][[:space:]]*=/) {
-      print replacement;
+    # Match either $GLOBALS['ldapdsn'] = ... or $ldapdsn = ...
+    if (!replaced && ($0 ~ /^[[:space:]]*\$ldapdsn[[:space:]]*=/ || (index($0, "$GLOBALS[") > 0 && index($0, "ldapdsn") > 0 && index($0, "=") > 0))) {
+      print_replacement();
       replaced = 1;
       skipping = 1;
       next;
     }
     if (skipping) {
-      if ($0 ~ /^[[:space:]]*\\);[[:space:]]*$/) {
+      if ($0 ~ /^[[:space:]]*\);[[:space:]]*$/) {
         skipping = 0;
       }
       next;
@@ -50,7 +50,16 @@ awk -v replacement="$replacement" '
       exit 2;
     }
   }
-' "$target" > "$tmp"
+' "$target" > "$tmp" || {
+  rc=$?
+  if [ "$rc" -eq 2 ]; then
+    echo "error: could not find ldapdsn block in $target" >&2
+  else
+    echo "error: failed to process $target" >&2
+  fi
+  rm -f "$tmp"
+  exit 1
+}
 
 for needle in "tsd-dc01.tsd.usit.no" "samAccountName" "ldapdsn"; do
   if ! grep -q "$needle" "$tmp"; then

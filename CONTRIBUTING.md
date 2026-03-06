@@ -27,22 +27,18 @@ export IMAGE_TAG=latest  # set this to a versioned tag for releases
 echo "$GHCR_LOGIN" | docker login ghcr.io -u $GHCR_USERNAME --password-stdin
 ```
 
-Build and tag the images:
+Build images (host platform by default):
 ```bash
-docker build -t ghcr.io/norment/redcap-webserver:${IMAGE_TAG} webserver
-docker build -t ghcr.io/norment/redcap-phpmyadmin:${IMAGE_TAG} phpmyadmin
-docker build -t ghcr.io/norment/redcap-mysql:${IMAGE_TAG} mysql
-docker build -t ghcr.io/norment/redcap-cron:${IMAGE_TAG} cron
+bash scripts/build_images.sh
 ```
 
-Push the images:
+Push multi-arch images to GHCR:
 ```bash
-docker push ghcr.io/norment/redcap-webserver:${IMAGE_TAG}
-docker push ghcr.io/norment/redcap-phpmyadmin:${IMAGE_TAG}
-docker push ghcr.io/norment/redcap-mysql:${IMAGE_TAG}
-docker push ghcr.io/norment/redcap-cron:${IMAGE_TAG}
+bash scripts/build_images.sh --push
 ```
 
 If you publish a new tag, update `IMAGE_TAG` in `.env` to match.
+
+phpMyAdmin uses the upstream `phpmyadmin:5.2-apache` image and is not published to GHCR.
 
 Note: `podman load` on TSD preserves the image name/tag stored in the tar. Ensure the offline bundle is created from the GHCR-tagged images (e.g., `ghcr.io/norment/redcap-webserver:${IMAGE_TAG}`), otherwise TSD users will need to retag after loading.
