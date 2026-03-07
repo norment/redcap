@@ -36,18 +36,18 @@ To deploy REDCap, you need its source code requiring a valid end-user license [a
 ## Import Files to TSD
 TSD has no internet access. Prepare the container images on a machine with internet access using `docker`, then import the resulting `.zip` bundle to TSD.
 
-On a machine with internet access, fetch the images (phpMyAdmin is pulled from Docker Hub) and create a single offline bundle:
+On macOS (or any non-amd64 host), explicitly pull `linux/amd64` so the bundle matches the TSD runtime architecture. Pull all images from GHCR and create a single offline bundle:
 ```bash
 export IMAGE_TAG=latest  # set this to the tag you want to deploy
 
-docker pull ghcr.io/norment/redcap-webserver:${IMAGE_TAG}
-docker pull phpmyadmin:5.2-apache
-docker pull ghcr.io/norment/redcap-mysql:${IMAGE_TAG}
-docker pull ghcr.io/norment/redcap-cron:${IMAGE_TAG}
+docker pull --platform linux/amd64 ghcr.io/norment/redcap-webserver:${IMAGE_TAG}
+docker pull --platform linux/amd64 ghcr.io/norment/redcap-phpmyadmin:${IMAGE_TAG}
+docker pull --platform linux/amd64 ghcr.io/norment/redcap-mysql:${IMAGE_TAG}
+docker pull --platform linux/amd64 ghcr.io/norment/redcap-cron:${IMAGE_TAG}
 
 docker save \
   ghcr.io/norment/redcap-webserver:${IMAGE_TAG} \
-  phpmyadmin:5.2-apache \
+  ghcr.io/norment/redcap-phpmyadmin:${IMAGE_TAG} \
   ghcr.io/norment/redcap-mysql:${IMAGE_TAG} \
   ghcr.io/norment/redcap-cron:${IMAGE_TAG} \
   -o redcap-images-${IMAGE_TAG}.tar
@@ -59,6 +59,15 @@ If the GHCR packages are private, authenticate before pulling:
 ```bash
 echo "$GITHUB_TOKEN" | docker login ghcr.io -u <github-username> --password-stdin
 ```
+
+Optional check (run on the internet-connected machine before `docker save`):
+```bash
+docker image inspect ghcr.io/norment/redcap-webserver:${IMAGE_TAG} --format '{{.Os}}/{{.Architecture}}'
+docker image inspect ghcr.io/norment/redcap-phpmyadmin:${IMAGE_TAG} --format '{{.Os}}/{{.Architecture}}'
+docker image inspect ghcr.io/norment/redcap-mysql:${IMAGE_TAG} --format '{{.Os}}/{{.Architecture}}'
+docker image inspect ghcr.io/norment/redcap-cron:${IMAGE_TAG} --format '{{.Os}}/{{.Architecture}}'
+```
+Expected output for all images: `linux/amd64`.
 
 Also, download the following files (also to your local machine):
 * [docker-compose.yml](docker-compose.yml)
@@ -84,10 +93,17 @@ Note that this command does not remove volumes (see `podman volume ls` and `podm
 ## Load and Start Docker Images
 On TSD, load the images with `podman`:
 ```bash
-export IMAGE_TAG=latest  # set this to match .env
+export IMAGE_TAG=2.0.0  # set this to match .env
 unzip redcap-images-${IMAGE_TAG}.zip
 podman load -i redcap-images-${IMAGE_TAG}.tar
 ```
+
+Optional check after loading on TSD:
+```bash
+podman image inspect ghcr.io/norment/redcap-webserver:${IMAGE_TAG} --format '{{.Os}}/{{.Architecture}}'
+podman image inspect ghcr.io/norment/redcap-phpmyadmin:${IMAGE_TAG} --format '{{.Os}}/{{.Architecture}}'
+```
+Expected output: `linux/amd64`.
 
 Before testing the loaded images, adapt the backup directory in `docker-compose.yml` which defines where the database backups are created (daily backups are scheduled through the [cron](https://en.wikipedia.org/wiki/Cron) container).
 ```bash
@@ -250,11 +266,11 @@ Local testing is Docker-based and differs from TSD in a few key ways: images are
 unzip redcap16.0.11.zip -d .
 ```
 
-2. Pull images with Docker (phpMyAdmin is pulled from Docker Hub; ensure `IMAGE_TAG` matches `.env`):
+2. Pull images with Docker from GHCR (ensure `IMAGE_TAG` matches `.env`):
 ```bash
 export IMAGE_TAG=latest
 docker pull ghcr.io/norment/redcap-webserver:${IMAGE_TAG}
-docker pull phpmyadmin:5.2-apache
+docker pull ghcr.io/norment/redcap-phpmyadmin:${IMAGE_TAG}
 docker pull ghcr.io/norment/redcap-mysql:${IMAGE_TAG}
 docker pull ghcr.io/norment/redcap-cron:${IMAGE_TAG}
 ```
