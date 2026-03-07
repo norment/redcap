@@ -38,7 +38,7 @@ TSD has no internet access. Prepare the container images on a machine with inter
 
 On macOS (or any non-amd64 host), explicitly pull `linux/amd64` so the bundle matches the TSD runtime architecture. Pull all images from GHCR and create a single offline bundle:
 ```bash
-export IMAGE_TAG=latest  # set this to the tag you want to deploy
+export IMAGE_TAG=latest  # set this to the tag you want to deploy (e.g., 2.0.0)
 
 docker pull --platform linux/amd64 ghcr.io/norment/redcap-webserver:${IMAGE_TAG}
 docker pull --platform linux/amd64 ghcr.io/norment/redcap-phpmyadmin:${IMAGE_TAG}
@@ -53,6 +53,7 @@ docker save \
   -o redcap-images-${IMAGE_TAG}.tar
 
 zip redcap-images-${IMAGE_TAG}.zip redcap-images-${IMAGE_TAG}.tar
+rm redcap-images-${IMAGE_TAG}.tar  # Clean up: keep only the zip for transfer
 ```
 
 If the GHCR packages are private, authenticate before pulling:
@@ -93,7 +94,7 @@ Note that this command does not remove volumes (see `podman volume ls` and `podm
 ## Load and Start Docker Images
 On TSD, load the images with `podman`:
 ```bash
-export IMAGE_TAG=2.0.0  # set this to match .env
+export IMAGE_TAG=latest  # set this to match .env
 unzip redcap-images-${IMAGE_TAG}.zip
 podman load -i redcap-images-${IMAGE_TAG}.tar
 ```
