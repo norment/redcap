@@ -18,7 +18,7 @@ services:
     phpmyadmin:
         depends_on:
             - database
-        image: phpmyadmin:5.2-apache
+        image: ghcr.io/norment/redcap-phpmyadmin:${IMAGE_TAG}
         restart: always
         container_name: ${PREFIX}phpmyadmin
         env_file: .env

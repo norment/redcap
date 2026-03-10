@@ -36,16 +36,26 @@ To deploy REDCap, you need its source code requiring a valid end-user license [a
 ## Import Files to TSD
 TSD has no internet access. Prepare the container images on a machine with internet access using `docker`, then import the resulting `.zip` bundle to TSD.
 
-On macOS (or any non-amd64 host), explicitly pull `linux/amd64` so the bundle matches the TSD runtime architecture. Pull all images from GHCR and create a single offline bundle:
+On macOS (or any non-amd64 host), set `DOCKER_DEFAULT_PLATFORM=linux/amd64` so the bundle matches TSD's runtime architecture. Pull all images from GHCR and create a single offline bundle:
+
 ```bash
-export IMAGE_TAG=latest  # set this to the tag you want to deploy (e.g., 2.0.0)
+export IMAGE_TAG=2.0.0  # set this to the tag you want to deploy
+export DOCKER_DEFAULT_PLATFORM=linux/amd64
 
-docker pull --platform linux/amd64 ghcr.io/norment/redcap-webserver:${IMAGE_TAG}
-docker pull --platform linux/amd64 ghcr.io/norment/redcap-phpmyadmin:${IMAGE_TAG}
-docker pull --platform linux/amd64 ghcr.io/norment/redcap-mysql:${IMAGE_TAG}
-docker pull --platform linux/amd64 ghcr.io/norment/redcap-cron:${IMAGE_TAG}
+docker pull ghcr.io/norment/redcap-webserver:${IMAGE_TAG}
+docker pull ghcr.io/norment/redcap-phpmyadmin:${IMAGE_TAG}
+docker pull ghcr.io/norment/redcap-mysql:${IMAGE_TAG}
+docker pull ghcr.io/norment/redcap-cron:${IMAGE_TAG}
 
-docker save \
+# Verify all images are amd64 before saving
+docker image inspect --platform linux/amd64 ghcr.io/norment/redcap-webserver:${IMAGE_TAG} --format '{{.Os}}/{{.Architecture}}'
+docker image inspect --platform linux/amd64 ghcr.io/norment/redcap-phpmyadmin:${IMAGE_TAG} --format '{{.Os}}/{{.Architecture}}'
+docker image inspect --platform linux/amd64 ghcr.io/norment/redcap-mysql:${IMAGE_TAG} --format '{{.Os}}/{{.Architecture}}'
+docker image inspect --platform linux/amd64 ghcr.io/norment/redcap-cron:${IMAGE_TAG} --format '{{.Os}}/{{.Architecture}}'
+
+# All four should print "linux/amd64" - if not, see troubleshooting note below
+
+docker save --platform linux/amd64 \
   ghcr.io/norment/redcap-webserver:${IMAGE_TAG} \
   ghcr.io/norment/redcap-phpmyadmin:${IMAGE_TAG} \
   ghcr.io/norment/redcap-mysql:${IMAGE_TAG} \
@@ -56,23 +66,16 @@ zip redcap-images-${IMAGE_TAG}.zip redcap-images-${IMAGE_TAG}.tar
 rm redcap-images-${IMAGE_TAG}.tar  # Clean up: keep only the zip for transfer
 ```
 
+**Troubleshooting for Apple Silicon Macs:** If verification shows `linux/arm64` despite setting `DOCKER_DEFAULT_PLATFORM`, remove all local redcap images (`docker rmi -f $(docker images 'ghcr.io/norment/redcap-*' -q)`) and try the pull commands again. If `docker save` fails, make sure you use `docker save --platform linux/amd64` as above. If plain `docker image inspect` prints `/` for Os/Architecture, that means the tag resolves to a multi-arch manifest list; verify with `docker image inspect --platform linux/amd64 ...` instead.
+
 If the GHCR packages are private, authenticate before pulling:
 ```bash
 echo "$GITHUB_TOKEN" | docker login ghcr.io -u <github-username> --password-stdin
 ```
 
-Optional check (run on the internet-connected machine before `docker save`):
-```bash
-docker image inspect ghcr.io/norment/redcap-webserver:${IMAGE_TAG} --format '{{.Os}}/{{.Architecture}}'
-docker image inspect ghcr.io/norment/redcap-phpmyadmin:${IMAGE_TAG} --format '{{.Os}}/{{.Architecture}}'
-docker image inspect ghcr.io/norment/redcap-mysql:${IMAGE_TAG} --format '{{.Os}}/{{.Architecture}}'
-docker image inspect ghcr.io/norment/redcap-cron:${IMAGE_TAG} --format '{{.Os}}/{{.Architecture}}'
-```
-Expected output for all images: `linux/amd64`.
-
 Also, download the following files (also to your local machine):
 * [docker-compose.yml](docker-compose.yml)
-* [.env](.env)
+* [.env.template](.env.template)
 * [scripts/configure_database_php.sh](scripts/configure_database_php.sh)
 * [scripts/configure_ldap_config_usit_tsd.sh](scripts/configure_ldap_config_usit_tsd.sh)
 
@@ -83,10 +86,10 @@ Use https://data.tsd.usit.no to import all the files listed above to your TSD pr
 Login to TSD, and connect to the pXX-podman machine (`ssh pXX-podman.tsd.usit.no`). Then execute the following in the terminal:
 ```bash
 export REDCAPDIR=/tsd/pXX/data/durable/database/redcap
-mkdir $REDCAPDIR && cd $REDCAPDIR
+mkdir ${REDCAPDIR} && cd ${REDCAPDIR}
 ```
 
-Move all imported files into `$REDCAPDIR`.
+Move all imported files into `${REDCAPDIR}`.
 
 Optional: delete all the dangling images and containers (`podman system prune -a`).
 Note that this command does not remove volumes (see `podman volume ls` and `podman volume rm <volume>` or `docker-compose down --volumes`, but be extremely careful with these commands as they remove data stored in previous REDCap instances).
@@ -94,7 +97,7 @@ Note that this command does not remove volumes (see `podman volume ls` and `podm
 ## Load and Start Docker Images
 On TSD, load the images with `podman`:
 ```bash
-export IMAGE_TAG=latest  # set this to match .env
+export IMAGE_TAG=2.0.0  # set this to match .env
 unzip redcap-images-${IMAGE_TAG}.zip
 podman load -i redcap-images-${IMAGE_TAG}.tar
 ```
@@ -114,7 +117,7 @@ Before testing the loaded images, adapt the backup directory in `docker-compose.
 
 The file [.env](.env) defines variables that are used across containers. Ensure `IMAGE_TAG` matches the tag you pulled from GHCR, and feel free to adapt the prefix which is added to container, volume and network names during the build or the login credentials for the MySQL database:
 ```bash
-IMAGE_TAG=latest
+IMAGE_TAG=2.0.0
 PREFIX=
 MYSQL_DATABASE=redcap
 MYSQL_ROOT_PASSWORD=redcap
@@ -138,24 +141,24 @@ docker-compose up -d # to start the process in the background
 The logs can be checked using the command `docker-compose logs` or to see the tail `docker-compose logs --tail 10`.
 
 ## Edit REDCap Configuration Files
-Extract the REDCap zip file into `$REDCAPDIR` and:
+Extract the REDCap zip file into `${REDCAPDIR}` and:
 
 - run the configuration scripts (see [scripts/README.md](scripts/README.md) for details):
   ```bash
-  bash scripts/configure_database_php.sh $REDCAPDIR/redcap/database.php
-  bash scripts/configure_ldap_config_usit_tsd.sh $REDCAPDIR/redcap/webtools2/ldap/ldap_config.php
+  bash scripts/configure_database_php.sh ${REDCAPDIR}/redcap/database.php
+  bash scripts/configure_ldap_config_usit_tsd.sh ${REDCAPDIR}/redcap/webtools2/ldap/ldap_config.php
   ```
 
 - make the REDCap directory executable and accessible to all users:
   ```bash
-  chmod -R 777 ./redcap
+  chmod -R 777 ${REDCAPDIR}/redcap
   ```
 
 ## Copy REDCap into Docker Volume
 Copy the REDCap directory into the web server volume via
 
 ```bash
-podman cp $REDCAPDIR/redcap ${PREFIX}webserver:/var/www/html/
+podman cp ${REDCAPDIR}/redcap ${PREFIX}webserver:/var/www/html/
 ```
 
 The name of the respective container should be `${PREFIX}webserver`. If that is not the case, please adapt the name in the command (all docker containers or volumes can be listed via `podman ps` or `podman volume ls`).
@@ -171,7 +174,7 @@ Access REDCap from your browser on `pXX-podman.tsd.usit.no:8000/redcap/install.p
 
 * Step 3 is optional. Feel free to modify the parameters, or keep them as defaults.
 
-Press `Generate SQL install script`, and copy the prompted SQL commands. From a browser, log in to phpMyAdmin (`pXX-podman.tsd.usit.no:9000`). NB! At this step use the **root** user credentials (root, $MYSQL_ROOT_PASSWORD (see [.env](.env), the default password is "redcap"; do not confuse *root* user with $MYSQL_REDCAP_USER also defined in the [.env](.env) - you should not use $MYSQL_REDCAP_USER in phpMyAdmin for connecting to MySQL database). Once phpMyAdmin is connected to the MySQL database, to the SQL tab, paste the copied SQL commands, and press `Go`. 
+Press `Generate SQL install script`, and copy the prompted SQL commands. From a browser, log in to phpMyAdmin (`pXX-podman.tsd.usit.no:9000`). NB! At this step use the **root** user credentials (root, $MYSQL_ROOT_PASSWORD (see [.env.template](.env.template), the default password is "redcap"; do not confuse *root* user with $MYSQL_REDCAP_USER also defined in the [.env.template](.env.template) - you should not use $MYSQL_REDCAP_USER in phpMyAdmin for connecting to MySQL database). Once phpMyAdmin is connected to the MySQL database, to the SQL tab, paste the copied SQL commands, and press `Go`. 
 
 * Step 5 proceed by clicking on `REDCap Configuration Check`. Some checks likely fail because of a lack of internet access, while other things can be resolved after login.
 
@@ -212,9 +215,9 @@ podman restart ${PREFIX}database
 ## Upgrade REDCap to a Newer Version
 Following the steps for the REDCap installation, version-specific entries were added to the MySQL database via phpMyAdmin. Hence, it is not possible to just replace the files in the webserver volume. 
 
-To properly upgrade REDCap, note down the current version of the REDCap instance (it will be needed later). Download an "Upgrade Package" of choice from [here](https://redcap.vanderbilt.edu/community/custom/download.php) (see also the "Upgrade Instructions.txt" in the downloaded zip file). Import the `redcapX.X.X_upgrade.zip` file to `$REDCAPDIR` and unzip the archive. Copy the version-specific directory to the webserver volume via:
+To properly upgrade REDCap, note down the current version of the REDCap instance (it will be needed later). Download an "Upgrade Package" of choice from [here](https://redcap.vanderbilt.edu/community/custom/download.php) (see also the "Upgrade Instructions.txt" in the downloaded zip file). Import the `redcapX.X.X_upgrade.zip` file to `${REDCAPDIR}` and unzip the archive. Copy the version-specific directory to the webserver volume via:
 ```bash
-podman cp $REDCAPDIR/redcap/* ${PREFIX}webserver:/var/www/html/redcap/
+podman cp ${REDCAPDIR}/redcap/* ${PREFIX}webserver:/var/www/html/redcap/
 ```
 
 Perform the upgrade via a browser: 
@@ -269,7 +272,7 @@ unzip redcap16.0.11.zip -d .
 
 2. Pull images with Docker from GHCR (ensure `IMAGE_TAG` matches `.env`):
 ```bash
-export IMAGE_TAG=latest
+export IMAGE_TAG=2.0.0
 docker pull ghcr.io/norment/redcap-webserver:${IMAGE_TAG}
 docker pull ghcr.io/norment/redcap-phpmyadmin:${IMAGE_TAG}
 docker pull ghcr.io/norment/redcap-mysql:${IMAGE_TAG}
