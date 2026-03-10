@@ -12,6 +12,7 @@ Defaults:
 Notes:
   - Without --push, builds a single-platform image and loads it into the local Docker engine.
   - With --push, builds a multi-arch manifest for linux/amd64 and linux/arm64 and pushes to GHCR.
+  - phpMyAdmin is mirrored from the upstream phpmyadmin:5.2-apache image.
 USAGE
 }
 
@@ -80,6 +81,20 @@ build_one() {
   fi
 }
 
+mirror_one() {
+  local name="$1"
+  local source_image="$2"
+  local target_image="ghcr.io/norment/redcap-${name}:${IMAGE_TAG}"
+
+  if [[ "${PUSH}" -eq 1 ]]; then
+    docker buildx imagetools create --tag "${target_image}" "${source_image}"
+  else
+    docker pull --platform "${PLATFORM}" "${source_image}"
+    docker tag "${source_image}" "${target_image}"
+  fi
+}
+
 build_one webserver webserver
+mirror_one phpmyadmin phpmyadmin:5.2-apache
 build_one mysql mysql
 build_one cron cron
