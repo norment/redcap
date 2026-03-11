@@ -39,6 +39,6 @@ bash scripts/build_images.sh --push
 
 If you publish a new tag, update `IMAGE_TAG` in `.env` to match.
 
-phpMyAdmin is mirrored from the upstream `phpmyadmin:5.2-apache` image to `ghcr.io/norment/redcap-phpmyadmin:${IMAGE_TAG}` by `scripts/build_images.sh`.
+phpMyAdmin uses the upstream `phpmyadmin:5.2-apache` image directly and is not published to GHCR. It is included in the offline bundle pulled from Docker Hub — see [INSTALL.md](INSTALL.md).
 
 Note: `podman load` on TSD preserves the image name/tag stored in the tar. Ensure the offline bundle is created from the GHCR-tagged images (e.g., `ghcr.io/norment/redcap-webserver:${IMAGE_TAG}`), otherwise TSD users will need to retag after loading.

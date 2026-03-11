@@ -36,37 +36,40 @@ To deploy REDCap, you need its source code requiring a valid end-user license [a
 ## Import Files to TSD
 TSD has no internet access. Prepare the container images on a machine with internet access using `docker`, then import the resulting `.zip` bundle to TSD.
 
-On macOS (or any non-amd64 host), set `DOCKER_DEFAULT_PLATFORM=linux/amd64` so the bundle matches TSD's runtime architecture. Pull all images from GHCR and create a single offline bundle:
+On macOS (or any non-amd64 host), set `DOCKER_DEFAULT_PLATFORM=linux/amd64` so the bundle matches TSD's runtime architecture. Pull the GHCR images and the upstream phpMyAdmin image, then create a single offline bundle:
 
 ```bash
 export IMAGE_TAG=2.0.0  # set this to the tag you want to deploy
 export DOCKER_DEFAULT_PLATFORM=linux/amd64
 
+# Pull GHCR images
 docker pull ghcr.io/norment/redcap-webserver:${IMAGE_TAG}
-docker pull ghcr.io/norment/redcap-phpmyadmin:${IMAGE_TAG}
 docker pull ghcr.io/norment/redcap-mysql:${IMAGE_TAG}
 docker pull ghcr.io/norment/redcap-cron:${IMAGE_TAG}
 
+# Pull phpMyAdmin directly from Docker Hub
+docker pull phpmyadmin:5.2-apache
+
 # Verify all images are amd64 before saving
 docker image inspect --platform linux/amd64 ghcr.io/norment/redcap-webserver:${IMAGE_TAG} --format '{{.Os}}/{{.Architecture}}'
-docker image inspect --platform linux/amd64 ghcr.io/norment/redcap-phpmyadmin:${IMAGE_TAG} --format '{{.Os}}/{{.Architecture}}'
 docker image inspect --platform linux/amd64 ghcr.io/norment/redcap-mysql:${IMAGE_TAG} --format '{{.Os}}/{{.Architecture}}'
 docker image inspect --platform linux/amd64 ghcr.io/norment/redcap-cron:${IMAGE_TAG} --format '{{.Os}}/{{.Architecture}}'
+docker image inspect --platform linux/amd64 phpmyadmin:5.2-apache --format '{{.Os}}/{{.Architecture}}'
 
 # All four should print "linux/amd64" - if not, see troubleshooting note below
 
 docker save --platform linux/amd64 \
   ghcr.io/norment/redcap-webserver:${IMAGE_TAG} \
-  ghcr.io/norment/redcap-phpmyadmin:${IMAGE_TAG} \
   ghcr.io/norment/redcap-mysql:${IMAGE_TAG} \
   ghcr.io/norment/redcap-cron:${IMAGE_TAG} \
+  phpmyadmin:5.2-apache \
   -o redcap-images-${IMAGE_TAG}.tar
 
 zip redcap-images-${IMAGE_TAG}.zip redcap-images-${IMAGE_TAG}.tar
 rm redcap-images-${IMAGE_TAG}.tar  # Clean up: keep only the zip for transfer
 ```
 
-**Troubleshooting for Apple Silicon Macs:** If verification shows `linux/arm64` despite setting `DOCKER_DEFAULT_PLATFORM`, remove all local redcap images (`docker rmi -f $(docker images 'ghcr.io/norment/redcap-*' -q)`) and try the pull commands again. If `docker save` fails, make sure you use `docker save --platform linux/amd64` as above. If plain `docker image inspect` prints `/` for Os/Architecture, that means the tag resolves to a multi-arch manifest list; verify with `docker image inspect --platform linux/amd64 ...` instead.
+**Troubleshooting for Apple Silicon Macs:** If verification shows `linux/arm64` despite setting `DOCKER_DEFAULT_PLATFORM`, remove all local redcap images (`docker rmi -f $(docker images 'ghcr.io/norment/redcap-*' -q) && docker rmi -f phpmyadmin:5.2-apache`) and try the pull commands again. If `docker save` fails, make sure you use `docker save --platform linux/amd64` as above. If plain `docker image inspect` prints `/` for Os/Architecture, that means the tag resolves to a multi-arch manifest list; verify with `docker image inspect --platform linux/amd64 ...` instead.
 
 If the GHCR packages are private, authenticate before pulling:
 ```bash
@@ -105,7 +108,7 @@ podman load -i redcap-images-${IMAGE_TAG}.tar
 Optional check after loading on TSD:
 ```bash
 podman image inspect ghcr.io/norment/redcap-webserver:${IMAGE_TAG} --format '{{.Os}}/{{.Architecture}}'
-podman image inspect ghcr.io/norment/redcap-phpmyadmin:${IMAGE_TAG} --format '{{.Os}}/{{.Architecture}}'
+podman image inspect phpmyadmin:5.2-apache --format '{{.Os}}/{{.Architecture}}'
 ```
 Expected output: `linux/amd64`.
 
