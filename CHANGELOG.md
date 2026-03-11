@@ -8,6 +8,12 @@ This is also an operational log of our REDcap deployment and management.
 * changes to infrastructure (e.g. switching to a new service VM, changing what service user we run the service from, etc.)
 * important changes to scripts that manage data within REDcap
 
+## 2026-03-11
+
+- Revert `docker-compose.yml` to use the upstream `phpmyadmin:5.2-apache` image directly instead of a GHCR mirror.
+- Include `phpmyadmin:5.2-apache` in the offline bundle documentation in `INSTALL.md` so TSD deployments do not require Docker Hub access at runtime.
+- Update `CONTRIBUTING.md` to clarify that phpMyAdmin is not published to GHCR.
+
 ## 2026-03-06
 
 - Introduce explicit GHCR image versioning for the REDCap stack.

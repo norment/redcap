@@ -12,6 +12,7 @@ Defaults:
 Notes:
   - Without --push, builds a single-platform image and loads it into the local Docker engine.
   - With --push, builds a multi-arch manifest for linux/amd64 and linux/arm64 and pushes to GHCR.
+  - phpMyAdmin uses the upstream phpmyadmin:5.2-apache image and is not built here.
 USAGE
 }
 
